@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+body.light {
+  background-color: #f1f5f9 !important;
+}
+
+body.light .bg-\[\#050b1a\],
+body.light .bg-\[\#060b16\],
+body.light .bg-\[\#081225\] {
+  background-color: #f1f5f9 !important;
+}
+
+body.light .bg-\[\#0f172a\] {
+  background-color: #ffffff !important;
+}
+
+body.light .bg-\[\#1e293b\] {
+  background-color: #e2e8f0 !important;
+}
+
+body.light .text-white {
+  color: #0f172a !important;
+}
+
+body.light .text-slate-400 {
+  color: #475569 !important;
+}
+
+body.light .text-slate-500 {
+  color: #64748b !important;
+}
+
+body.light .border-slate-800,
+body.light .border-slate-700 {
+  border-color: #cbd5e1 !important;
+}
