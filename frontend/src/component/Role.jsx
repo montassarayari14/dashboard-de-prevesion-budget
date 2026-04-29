@@ -7,7 +7,7 @@ export default function Roles({ users }) {
   // calcul des rôles
   const admins = users.filter(u => u.role == "Admin").length
   const directeurs = users.filter(u => u.role == "Directeur").length
-  const generals = users.filter(u => u.role == "Directeur Generale").length
+  const generals = users.filter(u => u.role == "DG").length
 
   
   const calcul = (value) => {

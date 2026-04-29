@@ -15,9 +15,9 @@ app.use("/api/logs",       require("./routes/logs"))
 
 // Connexion MongoDB
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB connecté"))
-  .catch((err) => console.log("❌ Erreur MongoDB:", err))
+  .then(() => console.log("MongoDB connecté"))
+  .catch((err) => console.log("Erreur MongoDB:", err))
 
 app.listen(process.env.PORT || 5000, () => {
-  console.log(`🚀 Serveur lancé sur http://localhost:${process.env.PORT || 5000}`)
+  console.log(`Serveur lancé sur http://localhost:${process.env.PORT || 5000}`)
 })
