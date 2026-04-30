@@ -12,6 +12,7 @@ app.use("/api/auth",       require("./routes/auth"))
 app.use("/api/users",      require("./routes/users"))
 app.use("/api/directions", require("./routes/directions"))
 app.use("/api/logs",       require("./routes/logs"))
+app.use("/api/ai",        require("./routes/ai"))
 
 // Connexion MongoDB
 mongoose.connect(process.env.MONGO_URI)

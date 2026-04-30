@@ -17,7 +17,7 @@ export default function DirecteurDashboard() {
       .finally(() => setLoading(false))
   }, [])
 
-  async function handleSoumettre() {
+async function handleSoumettre() {
     if (!direction || direction.statut !== "brouillon") return
     if (!window.confirm("Confirmer la soumission à la Direction Générale ?")) return
     try {
@@ -27,6 +27,18 @@ export default function DirecteurDashboard() {
       setDirection(res.data)
     } catch {
       alert("Erreur lors de la soumission")
+    }
+  }
+
+  async function handleReset() {
+    if (!direction || direction.statut === "brouillon") return
+    if (!window.confirm("Réinitialiser la demande? Vous devrez recommencer.")) return
+    try {
+      const res = await API.put(`/directions/${direction._id}/reset`)
+      setDirection(res.data)
+      alert("Demande réinitialisée. Cliquez sur 'Mon budget' pour modifier.")
+    } catch {
+      alert("Erreur lors de la réinitialisation")
     }
   }
 
@@ -168,7 +180,7 @@ export default function DirecteurDashboard() {
                 )}
               </div>
 
-              {/* Bouton soumettre */}
+{/* Bouton soumettre */}
               {direction.statut === "brouillon" && (
                 <button onClick={handleSoumettre} style={{
                   width: "100%", marginTop: "14px", padding: "10px",
@@ -185,6 +197,15 @@ export default function DirecteurDashboard() {
                   color: "#fca5a5", fontSize: "13px", fontWeight: "600", cursor: "pointer"
                 }}>
                   Réviser et resoumettre
+                </button>
+              )}
+              {direction.statut === "en_attente" && (
+                <button onClick={handleReset} style={{
+                  width: "100%", marginTop: "14px", padding: "10px",
+                  background: "#475569", border: "none", borderRadius: "10px",
+                  color: "#fff", fontSize: "13px", fontWeight: "600", cursor: "pointer"
+                }}>
+                  Réinitialiser
                 </button>
               )}
             </div>

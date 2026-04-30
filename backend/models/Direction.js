@@ -30,9 +30,14 @@ const DirectionSchema = new mongoose.Schema({
   },
   soumisLe: { type: Date, default: null },
 
-  // Décision du DG
+// Décision du DG
   commentaireDG: { type: String, default: null },
   decisionLe:    { type: Date, default: null },
+
+  // Analyses IA
+  aiScore:    { type: Number, default: null },
+  aiAnalyse:  { type: String, default: null },
+  analyseLe:   { type: Date, default: null },
 }, { timestamps: true })
 
 module.exports = mongoose.model("Direction", DirectionSchema)

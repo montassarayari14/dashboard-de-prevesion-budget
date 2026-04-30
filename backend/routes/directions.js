@@ -18,9 +18,40 @@ router.get("/ma-direction", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Aucune direction assignée à ce compte" })
     }
 
-    const direction = await Direction.findOne({ code: user.direction })
+    let direction = await Direction.findOne({ code: user.direction })
+    
+    // Si la direction n'existe pas, on la crée automatiquement avec les valeurs par défaut
     if (!direction) {
-      return res.status(404).json({ message: "Direction introuvable en base" })
+      const DirectionModel = require("../models/Direction")
+      const NOMS_DIRECTIONS = {
+        AI: "Direction Audit Interne",
+        AJ: "Direction Affaires Juridiques",
+        CG: "Direction Contrôle de Gestion",
+        DI: "Direction Informatique",
+        RH: "Direction Ressources Humaines",
+        SP: "Direction Stratégie & Planification",
+      }
+      
+      direction = await DirectionModel.create({
+        code: user.direction,
+        nom: NOMS_DIRECTIONS[user.direction] || user.direction,
+        directeur: `${user.prenom} ${user.nom}`,
+        budget: 0,
+        budgetN1: 0,
+        postes: [],
+        totalDemande: 0,
+        totalDemandeN1: 0,
+        statut: "brouillon",
+        soumisLe: null,
+        commentaireDG: null,
+        decisionLe: null
+      })
+      
+      await Log.create({
+        type: "Création",
+        action: `Direction ${direction.code} créée automatiquement pour ${user.prenom} ${user.nom}`,
+        user: req.user.id
+      })
     }
 
     res.json(direction)
@@ -183,6 +214,34 @@ router.delete("/:id", verifyToken, adminOnly, async (req, res) => {
 })
 
 // ─────────────────────────────────────────────
+// PUT /api/directions/:id/reset — Réinitialiser le statut à brouillon (pour le directeur)
+// ─────────────────────────────────────────────
+router.put("/:id/reset", verifyToken, async (req, res) => {
+  try {
+    const direction = await Direction.findById(req.params.id)
+    if (!direction) return res.status(404).json({ message: "Direction introuvable" })
+
+    // Only allow reset if the status is not brouillon
+    if (direction.statut === "brouillon") {
+      return res.status(400).json({ message: "La demande est déjà en brouillon" })
+    }
+
+    direction.statut = "brouillon"
+    direction.soumisLe = null
+    await direction.save()
+
+    await Log.create({
+      type: "Réinitialisation",
+      action: `Statut réinitialisé à brouillon — direction ${direction.code}`,
+      user: req.user.id
+    })
+
+    res.json(direction)
+  } catch (err) {
+    res.status(500).json({ message: "Erreur serveur" })
+  }
+})
+
 // PUT /api/directions/:id/decision — DG seulement
 // ─────────────────────────────────────────────
 router.put("/:id/decision", verifyToken, dgOnly, async (req, res) => {

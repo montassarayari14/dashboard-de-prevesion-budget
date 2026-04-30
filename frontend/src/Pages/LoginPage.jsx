@@ -64,7 +64,13 @@ export default function LoginPage() {
           <p className="text-slate-400 text-sm mt-1">Connectez-vous à votre espace</p>
         </div>
 
-        <div className="space-y-4">
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (!bloque) handleLogin()
+          }}
+        >
 
           {/* ── Bannière blocage compte ── */}
           {bloque && (
@@ -134,13 +140,13 @@ export default function LoginPage() {
 
           {/* Bouton connexion */}
           <button
-            onClick={handleLogin}
+            type="submit"
             disabled={loading || bloque}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl text-sm transition-colors disabled:opacity-50"
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>
-        </div>
+        </form>
       </div>
     </div>
   )

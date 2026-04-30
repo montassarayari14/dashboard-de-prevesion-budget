@@ -4,13 +4,37 @@ import StatutBadge from "../../component/directeur/StatutBadge"
 import EcartPill from "../../component/directeur/EcartPill"
 import ModalePoste from "../../component/directeur/ModalePoste"
 import API from "../../api/axios"
+import { budgetStructure, getCategoriesForDirection } from "../../data/budgetStructure"
 
-const catColors = {
-  "Informatique":   { bg: "#1e1b4b", color: "#a5b4fc" },
-  "RH / Formation": { bg: "#2e1065", color: "#c084fc" },
-  "Infrastructure": { bg: "#1c1300", color: "#fbbf24" },
-  "Général":        { bg: "#052e16", color: "#4ade80" },
-  "Autre":          { bg: "#1e293b", color: "#94a3b8" },
+// Couleurs par type de catégorie
+const typeColors = {
+  fonctionnement:    { bg: "#1e1b4b", color: "#a5b4fc" },
+  investissement: { bg: "#1c1300", color: "#fbbf24" },
+  projets:       { bg: "#2e1065", color: "#c084fc" },
+  gestion_rh:    { bg: "#052e16", color: "#4ade80" },
+  social:        { bg: "#450a0a", color: "#f87171" },
+  medical:       { bg: "#7f1d1d", color: "#fca5a5" },
+}
+
+// Fonction pour récupérer la couleur d'une catégorie
+function getCategoryColor(code) {
+  // Chercher la catégorie dans budgetStructure
+  for (const direction of Object.values(budgetStructure)) {
+    const cat = direction.find(c => c.code === code)
+    if (cat) {
+      return typeColors[cat.type] || { bg: "#1e293b", color: "#94a3b8" }
+    }
+  }
+  return { bg: "#1e293b", color: "#94a3b8" }
+}
+
+// Fonction pour récupérer le label d'une catégorie
+function getCategoryLabel(code) {
+  for (const direction of Object.values(budgetStructure)) {
+    const cat = direction.find(c => c.code === code)
+    if (cat) return cat.label
+  }
+  return code
 }
 
 export default function DirecteurBudget() {
@@ -20,9 +44,13 @@ export default function DirecteurBudget() {
   const [posteEdit, setPosteEdit] = useState(null) // null = ajout, objet = modification
   const [saving, setSaving]       = useState(false)
 
-  useEffect(() => {
+useEffect(() => {
     API.get("/directions/ma-direction")
       .then((res) => setDirection(res.data))
+      .catch((err) => {
+        console.error("Erreur chargement direction:", err)
+        alert("Erreur: " + (err.response?.data?.message || err.message))
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -142,14 +170,15 @@ export default function DirecteurBudget() {
                   </td>
                 </tr>
               ) : (
-                direction.postes.map((p, i) => {
-                  const cc = catColors[p.categorie] || catColors["Autre"]
+direction.postes.map((p, i) => {
+                  const cc = getCategoryColor(p.categorie)
+                  const label = getCategoryLabel(p.categorie)
                   return (
                     <tr key={i} style={{ borderBottom: "1px solid #1e293b" }}>
                       <td style={{ padding: "12px 16px", color: "#fff", fontWeight: "500", fontSize: "13px" }}>{p.nom}</td>
                       <td style={{ padding: "12px 16px" }}>
                         <span style={{ background: cc.bg, color: cc.color, padding: "3px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: "600" }}>
-                          {p.categorie}
+                          {p.categorie} - {label}
                         </span>
                       </td>
                       <td style={{ padding: "12px 16px", color: "#fff", fontFamily: "monospace", fontSize: "13px" }}>

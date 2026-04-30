@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import DGSidebar      from "../../component/dg/DGSidebar"
-import StatCard       from "../../component/dg/StatCard"
-import StatutBadge    from "../../component/dg/StatutBadge"
-import EcartPill      from "../../component/dg/EcartPill"
-import ModaleDecision from "../../component/dg/ModaleDecision"
-import API            from "../../api/axios"
+import DGSidebar       from "../../component/dg/DGSidebar"
+import StatCard        from "../../component/dg/StatCard"
+import StatutBadge     from "../../component/dg/StatutBadge"
+import EcartPill       from "../../component/dg/EcartPill"
+import ModaleDecision  from "../../component/dg/ModaleDecision"
+import AIAssistantPanel from "../../component/ai/AIAssistantPanel"
+import API             from "../../api/axios"
 
 export default function DGDetail() {
   const { id } = useParams()
@@ -164,12 +165,17 @@ export default function DGDetail() {
           </table>
         </div>
 
-        {/* Commentaire DG si déjà traité */}
+{/* Commentaire DG si déjà traité */}
         {direction.commentaireDG && (
           <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px", padding: "16px", marginBottom: "20px" }}>
             <p style={{ color: "#475569", fontSize: "11px", margin: "0 0 6px 0" }}>Commentaire DG</p>
             <p style={{ color: "#cbd5e1", fontSize: "13px", margin: 0 }}>{direction.commentaireDG}</p>
           </div>
+        )}
+
+        {/* Assistant IA - Analyse du budget */}
+        {direction.statut === "en_attente" && (
+          <AIAssistantPanel direction={direction} />
         )}
 
         {/* Bouton décision — uniquement si en attente */}

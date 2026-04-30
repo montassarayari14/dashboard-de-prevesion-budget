@@ -15,6 +15,7 @@ const navLinks = [
   { path: "/direction/budget",       label: "Mon budget"      },
   { path: "/direction/statistiques", label: "Statistiques"    },
   { path: "/direction/historique",   label: "Historique"      },
+  { path: "/direction/parametres",  label: "Paramètres"      },
 ]
 
 export default function DirecteurSidebar() {

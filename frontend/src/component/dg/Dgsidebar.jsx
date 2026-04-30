@@ -9,6 +9,8 @@ const navLinks = [
   { path: "/dg/rejetees",     label: "Rejetées"          },
   { path: "/dg/statistiques", label: "Statistiques"      },
   { path: "/dg/historique",   label: "Historique"        },
+  { path: "/dg/parametres",   label: "Paramètres"        },
+  { path: "/dg/ai-assistant", label: "🤖 Assistant IA"    },
 ]
 
 export default function DGSidebar() {
