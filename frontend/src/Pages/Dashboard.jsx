@@ -3,11 +3,14 @@ import Card from "../component/Card"
 import Roles from "../component/Role"
 import Sidebar from "../component/SideBar"
 import API from "../api/axios"
+import { useTheme } from "../hooks/useTheme"
+
+const CURRENT_YEAR = new Date().getFullYear()
 
 export default function Dashboard() {
+  const { t } = useTheme()
   const [users, setUsers] = useState([])
 
-  // charger depuis le backend au lieu de localStorage
   useEffect(() => {
     API.get("/users").then((res) => setUsers(res.data))
   }, [])
@@ -20,18 +23,17 @@ export default function Dashboard() {
   ).size
 
   return (
-    <div className="min-h-screen bg-[#050b1a] text-white">
+    <div className={`min-h-screen ${t.pageBg} ${t.textMain} transition-colors duration-300`}>
       <div className="flex min-h-screen">
         <Sidebar />
 
-        <div className="flex-1 bg-[#060b16] p-6">
+        <div className={`flex-1 ${t.pageBg} p-6 transition-colors duration-300`}>
 
           <h1 className="text-3xl font-bold mb-2">Tableau de bord</h1>
-          <p className="text-slate-400 mb-6">
-            Vue d'ensemble du système - Campagne 2024
+          <p className={`${t.textSub} mb-6`}>
+            Vue d'ensemble du système - Campagne {CURRENT_YEAR}
           </p>
 
-          {/* Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 mb-6">
             <Card
               title="UTILISATEURS"
@@ -53,7 +55,6 @@ export default function Dashboard() {
             />
           </div>
 
-          {/* Répartition des rôles */}
           <Roles users={users} />
 
         </div>

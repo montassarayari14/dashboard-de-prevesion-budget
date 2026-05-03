@@ -17,6 +17,7 @@ import DirecteurDashboard    from "./Pages/directeur/DirecteurDashboard"
 import DirecteurBudget       from "./Pages/directeur/DirecteurBudget"
 import DirecteurStatistiques from "./Pages/directeur/DirecteurStatistiques"
 import DirecteurHistorique   from "./Pages/directeur/DirecteurHistorique"
+import DirecteurParametres from "./Pages/directeur/DirecteurParametres.jsx"
 
 // ── Axe 3 : Directeur Général ──
 import DGDashboard    from "./Pages/dg/DGDashboard"
@@ -45,6 +46,8 @@ export default function App() {
       <Route path="/direction/budget"       element={<PrivateRoute><DirecteurBudget /></PrivateRoute>} />
       <Route path="/direction/statistiques" element={<PrivateRoute><DirecteurStatistiques /></PrivateRoute>} />
       <Route path="/direction/historique"   element={<PrivateRoute><DirecteurHistorique /></PrivateRoute>} />
+      <Route path="/direction/parametres"   element={<PrivateRoute><DirecteurParametres /></PrivateRoute>} />
+
 
       {/* ── Axe 3 : Directeur Général ── */}
       <Route path="/dg/dashboard"    element={<PrivateRoute><DGDashboard /></PrivateRoute>} />
