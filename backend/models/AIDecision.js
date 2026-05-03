@@ -17,7 +17,7 @@ const aiDecisionSchema = new mongoose.Schema({
   },
   recommandation: { 
     type: String, 
-    enum: ['APPROUVER', 'REJETER', 'EN_ATTENTE'],
+    enum: ['APPROUVER', 'REJETER', 'ANALYSER', 'EN_ATTENTE'],
     default: 'EN_ATTENTE' 
   },
   justification: String,

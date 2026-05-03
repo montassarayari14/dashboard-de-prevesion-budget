@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
-import DGSidebar from "../../component/dg/DGSidebar"
-import StatCard  from "../../component/dg/StatCard"
+import Dgsidebar from "../../component/dg/Dgsidebar"
+import Statcard  from "../../component/dg/Statcard"
+
 import API       from "../../api/axios"
 
 export default function DGStatistiques() {
@@ -15,32 +16,33 @@ export default function DGStatistiques() {
   const tauxGlobal   = totalAlloue > 0 ? Math.round((totalDemande / totalAlloue) * 100) : 0
 
   return (
-    <div style={{ minHeight: "100vh", background: "#050b1a", color: "#ffffff", display: "flex" }}>
+    <div className="min-h-screen bg-bg-global text-text-primary flex">
       <DGSidebar />
 
-      <div style={{ flex: 1, padding: "24px" }}>
+      <div className="flex-1 p-6">
 
         {/* En-tête */}
-        <h1 style={{ fontSize: "28px", fontWeight: "700", margin: "0 0 4px 0" }}>Statistiques</h1>
-        <p style={{ color: "#64748b", margin: "0 0 24px 0" }}>Comparaison inter-directions · 2025 vs 2024</p>
+        <h1 className="text-3xl font-bold mb-1">Statistiques</h1>
+        <p className="text-text-secondary mb-6">Comparaison inter-directions · 2025 vs 2024</p>
 
         {/* Cartes KPI */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", marginBottom: "24px" }}>
-          <StatCard label="Enveloppe totale 2025" value={`${Math.round(totalAlloue / 1000)}K DT`} sub={`${directions.length} directions`} valueColor="#818cf8" />
-          <StatCard label="Total demandé" value={`${Math.round(totalDemande / 1000)}K DT`} valueColor="#fbbf24" />
-          <StatCard label="Taux d'utilisation" value={`${tauxGlobal}%`} sub="Des enveloppes allouées" valueColor="#4ade80" />
-          <StatCard label="vs Budget 2024" value="+12%" sub="Hausse globale estimée" valueColor="#a78bfa" />
+        <div className="grid grid-cols-4 gap-3 mb-6">
+          <StatCard label="Enveloppe totale 2025" value={`${Math.round(totalAlloue / 1000)}K DT`} sub={`${directions.length} directions`} valueColor="accent-main" />
+          <StatCard label="Total demandé" value={`${Math.round(totalDemande / 1000)}K DT`} valueColor="warning" />
+          <StatCard label="Taux d'utilisation" value={`${tauxGlobal}%`} sub="Des enveloppes allouées" valueColor="success" />
+          <StatCard label="vs Budget 2024" value="+12%" sub="Hausse globale estimée" valueColor="accent-main" />
         </div>
 
         {/* Grille graphiques */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <div className="grid grid-cols-2 gap-4">
+
 
           {/* Comparaison N vs N-1 */}
           <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "14px", padding: "20px" }}>
             <h2 style={{ fontSize: "14px", fontWeight: "600", margin: "0 0 20px 0" }}>Budget 2025 vs 2024</h2>
 
             {directions.map((d) => {
-              const pct2025 = d.budget && d.totalDemande ? Math.round((d.totalDemande / d.budget) * 100) : 0
+const pct2025 = d.budget && d.totalDemande ? Math.min(100, Math.round((d.totalDemande / d.budget) * 100)) : 0
               const pct2024 = d.budgetN1 && d.totalDemandeN1 ? Math.round((d.totalDemandeN1 / d.budgetN1) * 100) : 0
               const delta   = d.totalDemande && d.totalDemandeN1
                 ? Math.round(((d.totalDemande - d.totalDemandeN1) / d.totalDemandeN1) * 100)
@@ -106,7 +108,7 @@ export default function DGStatistiques() {
             <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "14px", padding: "20px" }}>
               <h2 style={{ fontSize: "14px", fontWeight: "600", margin: "0 0 16px 0" }}>Taux d'utilisation</h2>
               {directions.map((d) => {
-                const pct = d.budget && d.totalDemande ? Math.round((d.totalDemande / d.budget) * 100) : 0
+const pct = d.budget && d.totalDemande ? Math.min(100, Math.round((d.totalDemande / d.budget) * 100)) : 0
                 return (
                   <div key={d.code} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
                     <span style={{ color: "#94a3b8", fontSize: "12px", width: "36px" }}>{d.code}</span>

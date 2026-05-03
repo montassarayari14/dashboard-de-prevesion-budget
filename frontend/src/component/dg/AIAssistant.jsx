@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import DGSidebar from "../../component/dg/DGSidebar"
+import Dgsidebar from "./Dgsidebar"
 import API from "../../api/axios"
-import RiskBadge from "../../component/ai/RiskBadge"
+import RiskBadge from "../ai/RiskBadge"
 
-// ─── Suggestions rapides pour le chat ───
 const QUICK_QUESTIONS = [
   "Quelles sont les directions à risque ?",
   "Résume les analyses du jour",
@@ -20,16 +19,13 @@ export default function AIAssistant() {
   const [loadingHist, setLoadingHist] = useState(true)
   const [erreurHist, setErreurHist]   = useState("")
   
-  // ─── Directions en attente (non encore analysées) ───
   const [directionsEnAttente, setDirectionsEnAttente] = useState([])
   const [loadingDirections, setLoadingDirections] = useState(true)
 
-  // ─── Filtres ───
   const [filterDirection, setFilterDirection] = useState("")
   const [filterRisque, setFilterRisque]       = useState("")
   const [filterReco, setFilterReco]           = useState("")
 
-  // ─── Chat ───
   const [chatMessages, setChatMessages] = useState([
     { role: "assistant", text: "Bonjour DG. Posez-moi une question sur les budgets, les demandes ou les analyses." }
   ])
@@ -38,10 +34,8 @@ export default function AIAssistant() {
   const [erreurChat, setErreurChat]   = useState("")
   const chatEndRef = useRef(null)
 
-// ─── Détail d'une analyse ───
   const [selectedAnalysis, setSelectedAnalysis] = useState(null)
 
-  // ─── Charge l'historique ───
   useEffect(() => {
     Promise.all([
       API.get("/ai/history?limit=50"),
@@ -52,7 +46,6 @@ export default function AIAssistant() {
         setAnalyses(data)
         setFiltered(data)
         
-        // Filtrer les directions en attente qui n'ont pas encore été analysées
         const dirs = dirRes.data || []
         const enAttente = dirs.filter(d => d.statut === "en_attente")
         setDirectionsEnAttente(enAttente)
@@ -64,7 +57,6 @@ export default function AIAssistant() {
       })
   }, [])
 
-  // ─── Applique les filtres ───
   useEffect(() => {
     let result = analyses
     if (filterDirection) {
@@ -79,12 +71,10 @@ export default function AIAssistant() {
     setFiltered(result)
   }, [filterDirection, filterRisque, filterReco, analyses])
 
-  // ─── Auto-scroll du chat ───
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [chatMessages])
 
-  // ─── Stats globales ───
   const stats = {
     total: analyses.length,
     approuver: analyses.filter(a => a.recommandation === "APPROUVER").length,
@@ -95,7 +85,6 @@ export default function AIAssistant() {
       : 0,
   }
 
-  // ─── Envoi question chat ───
   async function envoyerQuestion(e, qOverride = null) {
     if (e) e.preventDefault()
     const q = (qOverride || question).trim()
@@ -107,7 +96,6 @@ export default function AIAssistant() {
     setErreurChat("")
 
     try {
-      // Contexte enrichi avec les stats réelles — format compatible backend
       const totalAlloue = analyses.reduce((s, a) => s + (a.budgetAlloue || 0), 0)
       const totalDemande = analyses.reduce((s, a) => s + (a.budgetDemande || 0), 0)
       const tauxGlobal = totalAlloue > 0 ? Math.round((totalDemande / totalAlloue) * 100) : 0
@@ -125,28 +113,26 @@ export default function AIAssistant() {
       const reponse = res.data.reponse || "Réponse vide de l'IA."
       setChatMessages((prev) => [...prev, { role: "assistant", text: reponse }])
     } catch (err) {
-      setErreurChat(err.response?.data?.message || "Erreur lors de l'envoi")
+      setErreurChat(err.response?.data?.message || "Erreur de communication avec l'IA")
       setChatMessages((prev) => [
         ...prev,
-        { role: "assistant", text: "⚠️ " + (err.response?.data?.message || "Erreur de communication avec l'IA.") }
+        { role: "assistant", text: "Attention : " + (err.response?.data?.message || "Erreur.") }
       ])
     } finally {
       setLoadingChat(false)
     }
   }
 
-  // ─── Supprimer une analyse ───
   async function supprimerAnalyse(id) {
     if (!confirm("Supprimer cette analyse ?")) return
     try {
       await API.delete(`/ai/history/${id}`)
       setAnalyses((prev) => prev.filter(a => a._id !== id))
     } catch {
-      alert("Erreur lors de la suppression")
+      alert("Erreur suppression")
     }
   }
 
-  // ─── Format date ───
   function fmtDate(d) {
     if (!d) return "—"
     return new Date(d).toLocaleDateString("fr-FR", {
@@ -159,449 +145,269 @@ export default function AIAssistant() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#050b1a", color: "#ffffff", display: "flex" }}>
-      <DGSidebar />
+    <div className="min-h-screen bg-bg-global text-text-primary flex overflow-hidden">
+      <Dgsidebar />
 
-      <div style={{ flex: 1, padding: "24px", maxWidth: "1400px" }}>
-        {/* En-tête */}
-        <div style={{ marginBottom: "24px" }}>
-          <h1 style={{ fontSize: "22px", fontWeight: "700", margin: "0 0 6px 0" }}>
-            🤖 Assistant IA — Aide à la décision
-          </h1>
-          <p style={{ color: "#475569", fontSize: "13px", margin: 0 }}>
-            Historique des analyses budgétaires et chat interactif avec l'assistant intelligent.
-          </p>
+      <div className="flex-1 p-6 overflow-y-auto max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-1">Assistant IA — Aide à la décision</h1>
+          <p className="text-text-secondary">Historique analyses et chat IA budgets.</p>
         </div>
 
-{/* ─── Statistiques globales ─── */}
+        {/* Stats globales */}
         {!loadingHist && analyses.length > 0 && (
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(5, 1fr)",
-            gap: "12px",
-            marginBottom: "20px"
-          }}>
-            {[
-              { label: "Total analyses", value: stats.total, color: "#818cf8", icon: "📊" },
-              { label: "À approuver", value: stats.approuver, color: "#4ade80", icon: "✅" },
-              { label: "À rejeter", value: stats.rejeter, color: "#f87171", icon: "❌" },
-              { label: "Risques élevés", value: stats.risqueEleve, color: "#fbbf24", icon: "🔴" },
-              { label: "Score moyen", value: stats.moyenneScore + "/100", color: "#94a3b8", icon: "📈" },
+          <div className="grid grid-cols-5 gap-3 mb-6">
+{[
+              { label: "Total", value: stats.total, color: "accent-main", icon: "TOTAL" },
+              { label: "Approuvées", value: stats.approuver, color: "accent-main", icon: "APPROUVER" },
+              { label: "Rejetées", value: stats.rejeter, color: "accent-main", icon: "REJETER" },
+              { label: "Risque Élevé", value: stats.risqueEleve, color: "warning", icon: "RISQUE" },
+              { label: "Score moyen", value: stats.moyenneScore + "/100", color: "text-secondary", icon: "SCORE" },
             ].map((s, i) => (
-              <div key={i} style={{
-                background: "#0f172a",
-                border: "1px solid #1e293b",
-                borderRadius: "10px",
-                padding: "14px",
-                textAlign: "center"
-              }}>
-                <div style={{ fontSize: "20px", marginBottom: "4px" }}>{s.icon}</div>
-                <p style={{ color: s.color, fontSize: "20px", fontWeight: "700", margin: "0 0 2px 0" }}>
-                  {s.value}
-                </p>
-                <p style={{ color: "#475569", fontSize: "11px", margin: 0, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                  {s.label}
-                </p>
+              <div key={i} className="bg-bg-card border border-bg-border rounded-xl p-4 text-center transition-all hover:scale-105">
+                <div className={`text-2xl mb-1 ${s.color}`}>{s.icon}</div>
+                <p className={`${
+s.color} text-lg font-bold mb-1`}>{s.value}</p>
+                <p className="text-text-tertiary text-xs uppercase tracking-wider">{s.label}</p>
               </div>
             ))}
           </div>
         )}
 
-        {/* ─── Directions en attente d'analyse ─── */}
+        {/* Directions attente */}
         {!loadingDirections && directionsEnAttente.length > 0 && (
-          <div style={{ marginBottom: "20px" }}>
-            <p style={{
-              color: "#94a3b8",
-              fontSize: "11px",
-              textTransform: "uppercase",
-              letterSpacing: "0.5px",
-              marginBottom: "10px"
-            }}>
-              📋 Demandes en attente d'analyse ({directionsEnAttente.length})
+          <div className="mb-6">
+            <p className="text-text-secondary text-xs uppercase tracking-wider font-semibold mb-3">
+              Demandes attente analyse ({directionsEnAttente.length})
             </p>
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <div className="flex gap-2 flex-wrap">
               {directionsEnAttente.map((d) => (
                 <button
                   key={d._id}
                   onClick={() => navigate(`/dg/demandes/${d._id}`)}
-                  style={{
-                    background: "#1e1b4b",
-                    border: "1px solid #4338ca",
-                    borderRadius: "8px",
-                    padding: "10px 14px",
-                    cursor: "pointer",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-start",
-                    minWidth: "160px",
-                  }}
+                  className="bg-bg-card border border-accent-main/30 hover:border-accent-main hover:bg-accent-main/5 text-text-primary px-4 py-3 rounded-lg flex flex-col items-start min-w-[140px] transition-all text-sm font-medium hover:scale-[1.02]"
                 >
-                  <span style={{ color: "#ffffff", fontSize: "13px", fontWeight: "600" }}>
-                    {d.code}
-                  </span>
-                  <span style={{ color: "#94a3b8", fontSize: "11px" }}>
-                    {d.totalDemande?.toLocaleString("fr-FR")} DT
-                  </span>
-                  <span style={{ color: "#fbbf24", fontSize: "10px", marginTop: "4px" }}>
-                    → Analyser
-                  </span>
+                  <span className="font-semibold">{d.code}</span>
+                  <span className="text-text-secondary text-xs">{d.totalDemande?.toLocaleString("fr-FR")} DT</span>
+                  <span className="text-accent-main text-xs mt-1 uppercase tracking-wider font-medium">Analyser</span>
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: "20px" }}>
-          {/* ─── Colonne gauche : Historique ─── */}
-          <div>
-            <div style={{
-              background: "#0f172a",
-              border: "1px solid #1e293b",
-              borderRadius: "14px",
-              padding: "20px",
-              minHeight: "600px",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                <p style={{
-                  color: "#94a3b8",
-                  fontSize: "11px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                  margin: 0,
-                }}>
-                  📊 Historique des analyses IA ({filtered.length})
-                </p>
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
+          {/* Historique */}
+          <div className="bg-bg-card border border-bg-border rounded-2xl p-6 h-[600px]">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-text-secondary text-xs uppercase tracking-wider font-semibold">
+                Historique IA ({filtered.length})
+              </p>
+            </div>
 
-              {/* ─── Filtres ─── */}
-              <div style={{
-                display: "flex",
-                gap: "10px",
-                marginBottom: "16px",
-                flexWrap: "wrap"
-              }}>
-                <input
-                  type="text"
-                  placeholder="Filtrer par direction..."
-                  value={filterDirection}
-                  onChange={(e) => setFilterDirection(e.target.value)}
-                  style={{
-                    flex: 1,
-                    minWidth: "140px",
-                    background: "#1e293b",
-                    border: "1px solid #334155",
-                    borderRadius: "8px",
-                    padding: "8px 12px",
-                    color: "#ffffff",
-                    fontSize: "12px",
-                    outline: "none",
-                  }}
-                />
-                <select
-                  value={filterRisque}
-                  onChange={(e) => setFilterRisque(e.target.value)}
-                  style={{
-                    background: "#1e293b",
-                    border: "1px solid #334155",
-                    borderRadius: "8px",
-                    padding: "8px 12px",
-                    color: "#ffffff",
-                    fontSize: "12px",
-                    outline: "none",
-                    cursor: "pointer",
-                  }}
+            {/* Filtres */}
+            <div className="flex gap-2 mb-4 flex-wrap">
+              <input
+                type="text"
+placeholder="Filtre direction"
+                value={filterDirection}
+                onChange={(e) => setFilterDirection(e.target.value)}
+                className="flex-1 min-w-[120px] bg-bg-border border border-bg-border/50 rounded-lg px-3 py-2 text-sm text-text-primary focus:border-accent-main placeholder-text-tertiary focus:outline-none"
+              />
+              <select
+                value={filterRisque}
+                onChange={(e) => setFilterRisque(e.target.value)}
+                className="bg-bg-border border border-bg-border/50 rounded-lg px-3 py-2 text-sm text-text-primary focus:border-accent-main focus:outline-none"
+              >
+                <option value="">Risques</option>
+                <option value="FAIBLE">Faible</option>
+                <option value="MOYEN">Moyen</option>
+                <option value="ELEVE">Élevé</option>
+              </select>
+              <select
+                value={filterReco}
+                onChange={(e) => setFilterReco(e.target.value)}
+                className="bg-bg-border border border-bg-border/50 rounded-lg px-3 py-2 text-sm text-text-primary focus:border-accent-main focus:outline-none"
+              >
+                <option value="">Recommandation</option>
+                <option value="APPROUVER">Approuver</option>
+                <option value="REJETER">Rejeter</option>
+              </select>
+              {(filterDirection || filterRisque || filterReco) && (
+                <button
+                  onClick={() => { setFilterDirection(""); setFilterRisque(""); setFilterReco("") }}
+                  className="bg-bg-border/50 hover:bg-bg-border text-text-tertiary px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
-                  <option value="">Tous risques</option>
-                  <option value="FAIBLE">🟢 Faible</option>
-                  <option value="MOYEN">🟡 Moyen</option>
-                  <option value="ELEVE">🔴 Élevé</option>
-                </select>
-                <select
-                  value={filterReco}
-                  onChange={(e) => setFilterReco(e.target.value)}
-                  style={{
-                    background: "#1e293b",
-                    border: "1px solid #334155",
-                    borderRadius: "8px",
-                    padding: "8px 12px",
-                    color: "#ffffff",
-                    fontSize: "12px",
-                    outline: "none",
-                    cursor: "pointer",
-                  }}
-                >
-                  <option value="">Toutes reco</option>
-                  <option value="APPROUVER">✅ Approuver</option>
-                  <option value="REJETER">❌ Rejeter</option>
-                </select>
-                {(filterDirection || filterRisque || filterReco) && (
-                  <button
-                    onClick={() => { setFilterDirection(""); setFilterRisque(""); setFilterReco("") }}
-                    style={{
-                      background: "#334155",
-                      border: "none",
-                      color: "#ffffff",
-                      padding: "8px 14px",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Réinitialiser
-                  </button>
-                )}
-              </div>
-
-              {loadingHist && (
-                <div style={{ textAlign: "center", padding: "40px 0" }}>
-                  <div style={{
-                    width: "32px",
-                    height: "32px",
-                    border: "3px solid #1e293b",
-                    borderTop: "3px solid #6366f1",
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite",
-                    margin: "0 auto 12px",
-                  }} />
-                  <p style={{ color: "#64748b", fontSize: "13px" }}>Chargement des analyses...</p>
-                  <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-                </div>
-              )}
-
-              {erreurHist && (
-                <div style={{
-                  background: "#450a0a",
-                  border: "1px solid #dc2626",
-                  borderRadius: "10px",
-                  padding: "12px",
-                  color: "#f87171",
-                  fontSize: "13px",
-                }}>
-                  ⚠️ {erreurHist}
-                </div>
-              )}
-
-              {!loadingHist && !erreurHist && filtered.length === 0 && (
-                <div style={{ textAlign: "center", padding: "40px 0" }}>
-                  <p style={{ color: "#475569", fontSize: "13px", margin: "0 0 8px 0" }}>
-                    {analyses.length === 0 ? "Aucune analyse enregistrée." : "Aucun résultat pour ces filtres."}
-                  </p>
-                  {analyses.length === 0 && (
-                    <p style={{ color: "#334155", fontSize: "12px", margin: 0 }}>
-                      Les analyses apparaissent ici après avoir cliqué sur "Analyser ce budget" dans une demande en attente.
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {!loadingHist && filtered.length > 0 && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  {filtered.map((a) => (
-                    <div key={a._id}>
-                      <div
-                        style={{
-                          background: selectedAnalysis === a._id ? "#1e1b4b" : "#0f172a",
-                          border: `1px solid ${selectedAnalysis === a._id ? "#4338ca" : "#1e293b"}`,
-                          borderRadius: "10px",
-                          padding: "14px",
-                          cursor: "pointer",
-                          transition: "all 0.2s",
-                        }}
-                        onClick={() => setSelectedAnalysis(selectedAnalysis === a._id ? null : a._id)}
-                      >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px", flexWrap: "wrap" }}>
-                              <span style={{ color: "#e2e8f0", fontSize: "14px", fontWeight: "600" }}>
-                                {a.directionCode}
-                              </span>
-                              <RiskBadge niveau={a.risque} />
-                              <span style={{
-                                fontSize: "12px",
-                                fontWeight: "700",
-                                color: a.recommandation === "APPROUVER" ? "#4ade80" : "#f87171",
-                              }}>
-                                {a.recommandation === "APPROUVER" ? "✅" : "❌"} {a.recommandation}
-                              </span>
-                            </div>
-                            <p style={{ color: "#64748b", fontSize: "12px", margin: "0 0 2px 0" }}>
-                              {a.directionNom || "Direction sans nom"}
-                            </p>
-                            <p style={{ color: "#475569", fontSize: "11px", margin: 0 }}>
-                              Budget: {a.budgetAlloue?.toLocaleString("fr-FR")} DT · Demande:{" "}
-                              {a.budgetDemande?.toLocaleString("fr-FR")} DT · Score: {a.score}/100
-                            </p>
-                          </div>
-                          <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
-                            <p style={{ color: "#475569", fontSize: "11px", margin: 0 }}>
-                              {fmtDate(a.createdAt)}
-                            </p>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); supprimerAnalyse(a._id) }}
-                              style={{
-                                background: "none",
-                                border: "none",
-                                color: "#f87171",
-                                fontSize: "11px",
-                                cursor: "pointer",
-                                padding: "2px 6px",
-                                borderRadius: "4px",
-                              }}
-                              title="Supprimer"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* ─── Détail expansible ─── */}
-                      {selectedAnalysis === a._id && (
-                        <div style={{
-                          background: "#0f172a",
-                          border: "1px solid #312e81",
-                          borderTop: "none",
-                          borderRadius: "0 0 10px 10px",
-                          padding: "14px",
-                          marginTop: "-6px",
-                          marginBottom: "6px",
-                        }}>
-                          <p style={{ color: "#94a3b8", fontSize: "11px", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                            📝 Justification
-                          </p>
-                          <p style={{ color: "#cbd5e1", fontSize: "13px", lineHeight: "1.6", margin: "0 0 14px 0" }}>
-                            {a.justification}
-                          </p>
-
-                          {a.facteurs && a.facteurs.length > 0 && (
-                            <>
-                              <p style={{ color: "#94a3b8", fontSize: "11px", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                                📊 Facteurs d'analyse
-                              </p>
-                              <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "14px" }}>
-                                {a.facteurs.map((f, i) => (
-                                  <div key={i} style={{
-                                    display: "flex",
-                                    alignItems: "flex-start",
-                                    gap: "8px",
-                                    padding: "8px 10px",
-                                    borderRadius: "8px",
-                                    background: f.impact === "positif" ? "#064e3b" : f.impact === "negatif" ? "#7f1d1d" : "#1e293b",
-                                    fontSize: "12px",
-                                  }}>
-                                    <span style={{ flexShrink: 0 }}>
-                                      {f.impact === "positif" ? "✅" : f.impact === "negatif" ? "❌" : "⚠️"}
-                                    </span>
-                                    <span style={{ color: "#e2e8f0" }}>{f.detail}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </>
-                          )}
-
-                          {a.suggestions && a.suggestions.length > 0 && (
-                            <>
-                              <p style={{ color: "#94a3b8", fontSize: "11px", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                                💡 Suggestions
-                              </p>
-                              <ul style={{ margin: 0, paddingLeft: "18px", color: "#c7d2fe", fontSize: "12px", lineHeight: "1.7" }}>
-                                {a.suggestions.map((s, i) => (
-                                  <li key={i}>{s}</li>
-                                ))}
-                              </ul>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                  Reset
+                </button>
               )}
             </div>
+
+            {loadingHist && (
+              <div className="flex flex-col items-center justify-center h-48">
+                <div className="w-8 h-8 border-2 border-accent-main/20 border-t-accent-main rounded-full animate-spin mb-3" />
+                <p className="text-text-secondary text-sm">Chargement analyses...</p>
+              </div>
+            )}
+
+            {erreurHist && (
+              <div className="bg-error/10 border border-error/30 rounded-xl p-4 text-error text-sm flex items-center gap-2">
+Erreur {erreurHist}
+              </div>
+            )}
+
+            {!loadingHist && !erreurHist && filtered.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-48 text-center">
+                <p className="text-text-secondary text-sm mb-2">
+                  {analyses.length === 0 ? "Aucune analyse." : "Aucun résultat filtres."}
+                </p>
+                {analyses.length === 0 && (
+                  <p className="text-text-tertiary text-xs">
+                    Analyses apparaissent après "Analyser budget" demande attente.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {!loadingHist && filtered.length > 0 && (
+              <div className="space-y-2 max-h-[450px] overflow-y-auto">
+                {filtered.map((a) => (
+                  <div key={a._id}>
+                    <div
+                      className={`p-4 rounded-xl cursor-pointer transition-all border ${
+                        selectedAnalysis === a._id 
+                          ? 'bg-accent-main/10 border-accent-main shadow-md' 
+                          : 'bg-bg-card/50 border-bg-border hover:bg-bg-card hover:shadow-md'
+                      }`}
+                      onClick={() => setSelectedAnalysis(selectedAnalysis === a._id ? null : a._id)}
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <span className="text-text-primary font-semibold text-sm">{a.directionCode}</span>
+                            <RiskBadge niveau={a.risque} />
+                            <span className={`text-sm font-bold px-2 py-1 rounded-md ${
+                              a.recommandation === "APPROUVER" ? "bg-success/20 text-success" : "bg-error/20 text-error"
+                            }`}>
+                              {a.recommandation} 
+                            </span>
+                          </div>
+                          <p className="text-text-tertiary text-xs mb-1">{a.directionNom || "Direction sans nom"}</p>
+                          <p className="text-text-secondary text-xs">
+                            Budget: {a.budgetAlloue?.toLocaleString("fr-FR")} DT · Demande: {a.budgetDemande?.toLocaleString("fr-FR")} DT · Score: {a.score}/100
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 text-xs">
+                          <p className="text-text-tertiary">{fmtDate(a.createdAt)}</p>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); supprimerAnalyse(a._id) }}
+                            className="text-error hover:text-error/80 px-2 py-1 rounded text-xs font-medium hover:bg-error/10 transition-colors"
+                          >
+                            Supprimer
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {selectedAnalysis === a._id && (
+                      <div className={`mt-2 p-4 rounded-xl border ${
+                        a.recommandation === "APPROUVER" 
+                          ? 'bg-success/5 border-success/20' 
+                          : 'bg-error/5 border-error/20'
+                      }`}>
+                        <p className="text-text-secondary text-xs uppercase tracking-wider font-semibold mb-3 flex items-center gap-2">
+                          Justification <span className="w-2 h-2 rounded-full bg-accent-main animate-pulse"></span>
+                        </p>
+                        <p className="text-text-primary text-sm leading-relaxed mb-4">{a.justification}</p>
+
+                        {a.facteurs && a.facteurs.length > 0 && (
+                          <>
+                            <p className="text-text-secondary text-xs uppercase tracking-wider font-semibold mb-2">Facteurs</p>
+                            <div className="space-y-2 mb-4">
+                              {a.facteurs.map((f, i) => (
+                                <div key={i} className={`flex items-start gap-3 p-3 rounded-lg ${
+                                  f.impact === "positif" ? "bg-success/10 border border-success/20" 
+                                  : f.impact === "negatif" ? "bg-error/10 border border-error/20" 
+                                  : "bg-bg-card/50 border border-bg-border"
+                                }`}>
+                                  <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                                    f.impact === "positif" ? "text-success bg-success/20" 
+                                    : f.impact === "negatif" ? "text-error bg-error/20" 
+                                    : "text-text-secondary bg-bg-border/50"
+                                  }`}>
+                                    {f.impact === "positif" ? "Positif" : f.impact === "negatif" ? "Négatif" : "Neutre"}
+                                  </span>
+                                  <span className="text-text-primary text-sm">{f.detail}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+
+                        {a.suggestions && a.suggestions.length > 0 && (
+                          <>
+                            <p className="text-text-secondary text-xs uppercase tracking-wider font-semibold mb-2">Suggestions</p>
+                            <ul className="text-accent-main text-sm space-y-1 pl-4 list-disc list-inside">
+                              {a.suggestions.map((s, i) => (
+                                <li key={i}>{s}</li>
+                              ))}
+                            </ul>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* ─── Colonne droite : Chat IA ─── */}
-          <div style={{
-            background: "#0f172a",
-            border: "1px solid #1e293b",
-            borderRadius: "14px",
-            display: "flex",
-            flexDirection: "column",
-            height: "600px",
-            overflow: "hidden",
-          }}>
+          {/* Chat */}
+          <div className="lg:h-[600px] bg-bg-card border border-bg-border rounded-2xl flex flex-col overflow-hidden">
             {/* Header chat */}
-            <div style={{
-              padding: "14px 16px",
-              borderBottom: "1px solid #1e293b",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-            }}>
-              <span style={{ fontSize: "18px" }}>💬</span>
+            <div className="p-4 border-b border-bg-border flex items-center gap-3">
+              <div className="w-7 h-7 rounded-lg bg-accent-main/20 flex items-center justify-center text-xs uppercase tracking-wider font-semibold text-accent-main">
+                Chat
+              </div>
               <div>
-                <p style={{ color: "#ffffff", fontSize: "13px", fontWeight: "600", margin: 0 }}>
-                  Chat avec l'IA
-                </p>
-                <p style={{ color: "#475569", fontSize: "11px", margin: "2px 0 0 0" }}>
-                  Posez vos questions budgétaires
-                </p>
+                <p className="text-text-primary font-semibold text-sm">Chat IA</p>
+                <p className="text-text-secondary text-xs">Questions budgets</p>
               </div>
             </div>
 
             {/* Messages */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div className="flex-1 p-4 overflow-y-auto space-y-3">
               {chatMessages.map((msg, i) => (
                 <div
                   key={i}
-                  style={{
-                    alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
-                    maxWidth: "85%",
-                    background: msg.role === "user" ? "#4f46e5" : "#1e293b",
-                    color: "#ffffff",
-                    padding: "10px 14px",
-                    borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                    fontSize: "13px",
-                    lineHeight: "1.5",
-                    whiteSpace: "pre-wrap",
-                  }}
+                  className={`max-w-[85%] p-3 rounded-xl text-sm leading-relaxed ${
+                    msg.role === "user" 
+                      ? "self-end bg-accent-main text-text-primary rounded-br-sm" 
+                      : "self-start bg-bg-card/50 backdrop-blur-sm border border-bg-border rounded-br-sm"
+                  }`}
                 >
                   {msg.text}
                 </div>
               ))}
               {loadingChat && (
-                <div style={{ alignSelf: "flex-start", display: "flex", gap: "4px", padding: "10px 14px" }}>
-                  <span style={{ width: "8px", height: "8px", background: "#64748b", borderRadius: "50%", animation: "bounce 1.4s infinite ease-in-out both", animationDelay: "0s" }} />
-                  <span style={{ width: "8px", height: "8px", background: "#64748b", borderRadius: "50%", animation: "bounce 1.4s infinite ease-in-out both", animationDelay: "0.16s" }} />
-                  <span style={{ width: "8px", height: "8px", background: "#64748b", borderRadius: "50%", animation: "bounce 1.4s infinite ease-in-out both", animationDelay: "0.32s" }} />
-                  <style>{`
-                    @keyframes bounce {
-                      0%, 80%, 100% { transform: scale(0); }
-                      40% { transform: scale(1); }
-                    }
-                  `}</style>
+                <div className="self-start flex gap-1 p-3">
+                  <span className="w-2 h-2 bg-text-tertiary rounded-full animate-bounce" style={{animationDelay: '0s'}} />
+                  <span className="w-2 h-2 bg-text-tertiary rounded-full animate-bounce" style={{animationDelay: '0.16s'}} />
+                  <span className="w-2 h-2 bg-text-tertiary rounded-full animate-bounce" style={{animationDelay: '0.32s'}} />
                 </div>
               )}
               <div ref={chatEndRef} />
             </div>
 
-            {/* Questions rapides */}
-            <div style={{ padding: "8px 14px", borderTop: "1px solid #1e293b", display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            {/* Quick questions */}
+            <div className="p-2 border-t border-bg-border flex gap-2 flex-wrap px-3">
               {QUICK_QUESTIONS.map((q, i) => (
                 <button
                   key={i}
                   onClick={() => envoyerQuestion(null, q)}
                   disabled={loadingChat}
-                  style={{
-                    background: "#1e293b",
-                    border: "1px solid #334155",
-                    color: "#94a3b8",
-                    fontSize: "11px",
-                    padding: "5px 10px",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                  }}
+                  className="bg-bg-border/50 hover:bg-bg-border text-text-tertiary px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap disabled:opacity-50"
                 >
                   {q}
                 </button>
@@ -609,46 +415,27 @@ export default function AIAssistant() {
             </div>
 
             {/* Input */}
-            <form onSubmit={envoyerQuestion} style={{ padding: "10px 14px", borderTop: "1px solid #1e293b", display: "flex", gap: "8px" }}>
+            <form onSubmit={envoyerQuestion} className="p-3 border-t border-bg-border flex gap-2">
               <input
                 type="text"
-                placeholder="Posez votre question..."
+                placeholder="Posez question..."
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 disabled={loadingChat}
-                style={{
-                  flex: 1,
-                  background: "#1e293b",
-                  border: "1px solid #334155",
-                  borderRadius: "8px",
-                  padding: "8px 12px",
-                  color: "#ffffff",
-                  fontSize: "13px",
-                  outline: "none",
-                }}
+                className="flex-1 bg-bg-border border border-bg-border/50 rounded-lg px-3 py-2 text-sm text-text-primary focus:border-accent-main focus:outline-none placeholder-text-tertiary disabled:cursor-not-allowed"
               />
               <button
                 type="submit"
                 disabled={loadingChat || !question.trim()}
-                style={{
-                  background: "#4f46e5",
-                  border: "none",
-                  color: "#ffffff",
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  fontSize: "13px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  opacity: loadingChat || !question.trim() ? 0.6 : 1,
-                }}
+                className="bg-accent-main hover:bg-accent-hover text-text-primary px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
               >
                 Envoyer
               </button>
             </form>
 
             {erreurChat && (
-              <p style={{ color: "#f87171", fontSize: "11px", padding: "0 14px 8px", margin: 0 }}>
-                ⚠️ {erreurChat}
+              <p className="text-error text-xs p-3 border-t border-bg-border">
+Erreur {erreurChat}
               </p>
             )}
           </div>

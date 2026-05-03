@@ -2,38 +2,118 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    /* 🎨 Light Mode Base - EXACT specs */
+    --bg-global: 210 14% 96%;      /* #F3F4F6 */
+    --bg-card: 0 0% 100%;          /* #FFFFFF */
+    --bg-sidebar-admin: 217 71% 33%;  /* #1E3A8A */
+    --bg-sidebar-dg: 217 71% 33%;    /* #1E3A8A */
+    --bg-sidebar-dir: 217 71% 33%;   /* #1E3A8A */
+    --bg-header: 0 0% 100%;        /* #FFFFFF */
+    --bg-border: 210 20% 90%;      /* Light borders */
 
-body.light {
-  background-color: #f1f5f9 !important;
+    /* 📝 Texte */
+    --text-primary: 215 28% 17%;   /* #111827 */
+    --text-secondary: 214 32% 45%; /* #6B7280 */
+
+    /* 🎯 Couleur principale */
+    --accent-main: 217 91% 60%;    /* #2563EB */
+    --accent-hover: 222 80% 55%;   /* #1D4ED8 */
+
+    /* 📊 Sémantique */
+    --success: 159 83% 47%;        /* #16A34A */
+    --error: 0 84% 60%;            /* #DC2626 */
+    --warning: 45 89% 59%;         /* #F59E0B */
+  }
+
+  .dark {
+    /* 🌙 Mode sombre - EXACT specs */
+    --bg-global: 220 80% 5%;       /* #050b1a */
+    --bg-card: 216 36% 15%;        /* #0f172a */
+    --bg-sidebar-admin: 214 47% 8%;  /* #0d1117 */
+    --bg-sidebar-dg: 214 10% 12%;    /* #0d1424 */
+    --bg-sidebar-dir: 214 10% 12%;   /* #0d1424 */
+    --bg-header: 215 28% 22%;      /* #1e293b */
+    --bg-border: 215 28% 22%;      /* #1e293b */
+
+    /* 📝 Texte */
+    --text-primary: 224 66% 97%;   /* #f1f5f9 */
+    --text-secondary: 218 44% 60%; /* #94a3b8 */
+
+    /* 🎯 Accent principal Indigo */
+    --accent-main: 237 83% 65%;    /* #6366f1 */
+    --accent-hover: 237 83% 55%;   /* #4f46e5 */
+
+    /* 📊 Sémantique */
+    --success: 142 71% 58%;        /* #4ade80 */
+    --error: 5 83% 68%;            /* #f87171 */
+    --warning: 44 89% 60%;         /* #fbbf24 */
+  }
 }
 
-body.light .bg-\[\#050b1a\],
-body.light .bg-\[\#060b16\],
-body.light .bg-\[\#081225\] {
-  background-color: #f1f5f9 !important;
+/* FORCE LIGHT OVERRIDES - Global sans JSX */
+/* Light mode overrides - DG interface */
+body:not(.dark) {
+  --override-bg-global: #F3F4F6;
+  --override-bg-card: #FFFFFF;
+  --override-text-primary: #111827;
+  --override-text-secondary: #6B7280;
+  --override-border: #E5E7EB;
+  --override-accent: #2563EB;
+  --override-success: #16A34A;
+  --override-error: #DC2626;
+  --override-warning: #F59E0B;
 }
 
-body.light .bg-\[\#0f172a\] {
-  background-color: #ffffff !important;
+/* Light: NO dark colors */
+body:not(.dark) [style*="050b1a"], 
+body:not(.dark) .bg-\[\#050b1a\] { background-color: #F3F4F6 !important; }
+
+body:not(.dark) [style*="0f172a"], 
+body:not(.dark) .bg-\[\#0f172a\] { background-color: #FFFFFF !important; }
+
+body:not(.dark) [style*="1e293b"], 
+body:not(.dark) .bg-\[\#1e293b\], 
+body:not(.dark) .border-slate-800 { border-color: #E5E7EB !important; background-color: #F3F4F6 !important; }
+
+body:not(.dark) [style*="text-white"] { color: #111827 !important; }
+body:not(.dark) [style*="text-slate-400"] { color: #6B7280 !important; }
+
+/* LIGHT FORCE - All pages + sidebar blue */
+body:not(.dark) {
+  background-color: #F3F4F6 !important;
 }
 
-body.light .bg-\[\#1e293b\] {
-  background-color: #e2e8f0 !important;
+body:not(.dark) .bg-sidebar-admin,
+body:not(.dark) .bg-sidebar-dg,
+body:not(.dark) .bg-sidebar-dir {
+  background-color: #1E3A8A !important;
+  border-right-color: #1e40af !important;
 }
 
-body.light .text-white {
-  color: #0f172a !important;
+body:not(.dark) [style*="050b1a"],
+body:not(.dark) [style*="0f172a"] { 
+  background-color: #FFFFFF !important; 
 }
 
-body.light .text-slate-400 {
-  color: #475569 !important;
+body:not(.dark) [style*="1e293b"] { 
+  border-color: #E5E7EB !important; 
+  background-color: #F3F4F6 !important; 
 }
 
-body.light .text-slate-500 {
-  color: #64748b !important;
+body:not(.dark) * {
+  --forced-light: #F3F4F6;
 }
 
-body.light .border-slate-800,
-body.light .border-slate-700 {
-  border-color: #cbd5e1 !important;
+/* NO dark remnants in light */
+body:not(.dark) .text-white { color: #111827 !important; }
+body:not(.dark) .bg-indigo-600 { background-color: #2563EB !important; }
+
+
+
+
+@layer components {
+  .glass-card { @apply bg-bg-card/80 backdrop-blur-sm border border-bg-border/50; }
 }
+

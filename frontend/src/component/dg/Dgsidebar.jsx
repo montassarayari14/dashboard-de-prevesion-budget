@@ -10,7 +10,7 @@ const navLinks = [
   { path: "/dg/statistiques", label: "Statistiques"      },
   { path: "/dg/historique",   label: "Historique"        },
   { path: "/dg/parametres",   label: "Paramètres"        },
-  { path: "/dg/ai-assistant", label: "🤖 Assistant IA"    },
+  { path: "/dg/ai-assistant", label: "Assistant IA"    },
 ]
 
 export default function DGSidebar() {
@@ -26,35 +26,31 @@ export default function DGSidebar() {
     navigate("/login")
   }
 
+// Sidebar theme-aware (DG)
   return (
-    <div style={{ width: "210px", minHeight: "100vh", background: "#0d1424", borderRight: "1px solid #1e293b", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "0" }}>
+    <div className="w-52 min-h-screen bg-sidebar-dg border-r border-bg-border/50 flex flex-col justify-between flex-shrink-0">
+
       
       {/* Titre en haut */}
       <div>
-        <div style={{ padding: "20px 16px", borderBottom: "1px solid #1e293b" }}>
-          <p style={{ color: "#c7d2fe", fontWeight: "700", fontSize: "14px", margin: 0 }}>Direction Générale</p>
-          <p style={{ color: "#475569", fontSize: "11px", margin: "2px 0 0 0" }}>Campagne 2025</p>
+        <div className="p-5 border-b border-blue-500/50">
+          <p className="text-white font-bold text-sm">Direction Générale</p>
+          <p className="text-blue-100 text-xs mt-0.5">Campagne 2025</p>
         </div>
 
         {/* Navigation */}
-        <nav style={{ padding: "8px" }}>
+        <nav className="p-2 mt-1">
           {navLinks.map((link) => {
             const isActive = location.pathname === link.path
             return (
               <Link
                 key={link.path}
                 to={link.path}
-                style={{
-                  display: "block",
-                  padding: "9px 12px",
-                  marginBottom: "2px",
-                  borderRadius: "8px",
-                  textDecoration: "none",
-                  fontSize: "13px",
-                  color: isActive ? "#a5b4fc" : "#64748b",
-                  background: isActive ? "#1e1b4b" : "transparent",
-                  borderLeft: isActive ? "2px solid #6366f1" : "2px solid transparent",
-                }}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm mb-0.5 transition-colors no-underline
+                  ${isActive
+                    ? "bg-blue-600 text-white border-l-2 border-amber-500"
+                    : "text-blue-100 hover:text-white hover:bg-blue-700/80 border-l-2 border-transparent"
+                  }`}
               >
                 {link.label}
               </Link>
@@ -63,19 +59,18 @@ export default function DGSidebar() {
         </nav>
       </div>
 
-      {/* Profil + déconnexion en bas */}
-      <div style={{ padding: "12px 16px", borderTop: "1px solid #1e293b" }}>
-        <p style={{ color: "#cbd5e1", fontSize: "13px", fontWeight: "600", margin: "0 0 2px 0" }}>
+      {/* Profil + déconnexion */}
+      <div className="p-4 border-t border-blue-500/50">
+        <p className="text-white text-sm font-semibold truncate">
           {user.prenom} {user.nom}
         </p>
-        <p style={{ color: "#475569", fontSize: "11px", margin: "0 0 8px 0" }}>Directeur Général</p>
-        <button
-          onClick={logout}
-          style={{ color: "#f87171", fontSize: "12px", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-        >
+        <p className="text-blue-100 text-xs mb-2">Directeur Général</p>
+        
+        <button onClick={logout} className="text-red-200 text-xs hover:text-white bg-transparent border-none cursor-pointer p-0">
           Déconnexion
         </button>
       </div>
+
     </div>
   )
 }

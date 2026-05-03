@@ -226,13 +226,24 @@ router.put("/:id/reset", verifyToken, async (req, res) => {
       return res.status(400).json({ message: "La demande est déjà en brouillon" })
     }
 
+    const clearPostes = req.query.clear === "true" || req.query.clear === "1"
+
     direction.statut = "brouillon"
     direction.soumisLe = null
+    direction.commentaireDG = null
+    direction.decisionLe = null
+
+    if (clearPostes) {
+      direction.postes = []
+      direction.totalDemande = 0
+      direction.totalDemandeN1 = 0
+    }
+
     await direction.save()
 
     await Log.create({
       type: "Réinitialisation",
-      action: `Statut réinitialisé à brouillon — direction ${direction.code}`,
+      action: `Statut réinitialisé à brouillon — direction ${direction.code}${clearPostes ? " (nouvelle demande)" : ""}`,
       user: req.user.id
     })
 

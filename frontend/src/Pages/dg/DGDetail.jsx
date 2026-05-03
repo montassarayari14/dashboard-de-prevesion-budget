@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import DGSidebar       from "../../component/dg/DGSidebar"
-import StatCard        from "../../component/dg/StatCard"
-import StatutBadge     from "../../component/dg/StatutBadge"
-import EcartPill       from "../../component/dg/EcartPill"
-import ModaleDecision  from "../../component/dg/ModaleDecision"
+import Dgsidebar from "../../component/dg/Dgsidebar"
+import Statcard from "../../component/dg/Statcard"
+import Statutbadge from "../../component/dg/Statutbadge"
+import Ecartpill from "../../component/dg/Ecartpill"
+import Modaledecision from "../../component/dg/Modaledecision"
 import AIAssistantPanel from "../../component/ai/AIAssistantPanel"
-import API             from "../../api/axios"
+import API from "../../api/axios"
 
 export default function DGDetail() {
   const { id } = useParams()
@@ -14,10 +14,9 @@ export default function DGDetail() {
 
   const [direction, setDirection] = useState(null)
   const [showModal, setShowModal] = useState(false)
-  const [loading, setLoading]     = useState(true)
-  const [erreur, setErreur]       = useState("")
+  const [loading, setLoading] = useState(true)
+  const [erreur, setErreur] = useState("")
 
-  // Charge les détails de la direction
   useEffect(() => {
     API.get(`/directions/${id}`)
       .then((res) => setDirection(res.data))
@@ -25,7 +24,6 @@ export default function DGDetail() {
       .finally(() => setLoading(false))
   }, [id])
 
-  // Envoie la décision (approuver / rejeter) au backend
   async function handleDecision(dir, choix, commentaire) {
     try {
       const statut = choix === "approuver" ? "approuve" : "rejete"
@@ -37,19 +35,19 @@ export default function DGDetail() {
   }
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", background: "#050b1a", display: "flex" }}>
-      <DGSidebar />
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#475569" }}>Chargement...</p>
+    <div className="min-h-screen bg-bg-global flex">
+      <Dgsidebar />
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-text-tertiary">Chargement...</p>
       </div>
     </div>
   )
 
   if (erreur || !direction) return (
-    <div style={{ minHeight: "100vh", background: "#050b1a", display: "flex" }}>
-      <DGSidebar />
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#f87171" }}>{erreur || "Direction introuvable"}</p>
+    <div className="min-h-screen bg-bg-global flex">
+      <Dgsidebar />
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-error">{erreur || "Direction introuvable"}</p>
       </div>
     </div>
   )
@@ -59,104 +57,97 @@ export default function DGDetail() {
     : null
 
   return (
-    <div style={{ minHeight: "100vh", background: "#050b1a", color: "#ffffff", display: "flex" }}>
-      <DGSidebar />
+    <div className="min-h-screen bg-bg-global text-text-primary flex overflow-hidden">
+      <Dgsidebar />
 
-      <div style={{ flex: 1, padding: "24px" }}>
-
+      <div className="flex-1 p-6 overflow-y-auto">
         {/* En-tête avec bouton retour */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+        <div className="flex items-center gap-3 mb-6">
           <button
             onClick={() => navigate("/dg/demandes")}
-            style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: "13px" }}
+            className="bg-transparent border-none text-text-secondary text-sm hover:text-text-primary cursor-pointer"
           >
             ← Retour
           </button>
-          <span style={{ color: "#334155" }}>/</span>
-          <h1 style={{ fontSize: "22px", fontWeight: "700", margin: 0 }}>
-            Détail — Direction {direction.code}
-          </h1>
-          <StatutBadge statut={direction.statut || "brouillon"} />
+          <span className="text-text-tertiary">/</span>
+          <h1 className="text-2xl font-bold">Détail — Direction {direction.code}</h1>
+          <Statutbadge statut={direction.statut || "brouillon"} />
         </div>
 
         {/* Infos direction */}
-        <div style={{
-          background: "#0f172a", border: "1px solid #1e293b",
-          borderRadius: "12px", padding: "16px",
-          display: "flex", gap: "32px", marginBottom: "20px"
-        }}>
+        <div className="bg-bg-card border border-bg-border rounded-xl p-4 flex gap-8 mb-5">
           <div>
-            <p style={{ color: "#475569", fontSize: "11px", margin: "0 0 4px 0" }}>Direction</p>
-            <p style={{ color: "#ffffff", fontSize: "14px", fontWeight: "600", margin: 0 }}>{direction.nom}</p>
+            <p className="text-text-tertiary text-xs mb-1">Direction</p>
+            <p className="text-text-primary text-sm font-semibold">{direction.nom}</p>
           </div>
           <div>
-            <p style={{ color: "#475569", fontSize: "11px", margin: "0 0 4px 0" }}>Directeur</p>
-            <p style={{ color: "#cbd5e1", fontSize: "14px", margin: 0 }}>{direction.directeur || "Non assigné"}</p>
+            <p className="text-text-tertiary text-xs mb-1">Directeur</p>
+            <p className="text-text-secondary text-sm">{direction.directeur || "Non assigné"}</p>
           </div>
           <div>
-            <p style={{ color: "#475569", fontSize: "11px", margin: "0 0 4px 0" }}>Soumis le</p>
-            <p style={{ color: "#cbd5e1", fontSize: "14px", fontFamily: "monospace", margin: 0 }}>
+            <p className="text-text-tertiary text-xs mb-1">Soumis le</p>
+            <p className="text-text-secondary text-sm font-mono">
               {direction.soumisLe ? new Date(direction.soumisLe).toLocaleDateString("fr-FR") : "Non soumis"}
             </p>
           </div>
         </div>
 
         {/* Cartes KPI */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "20px" }}>
-          <StatCard
+        <div className="grid grid-cols-3 gap-4 mb-5">
+          <Statcard
             label="Budget alloué"
             value={direction.budget ? direction.budget.toLocaleString("fr-FR") + " DT" : "—"}
-            valueColor="#818cf8"
+            valueColor="accent-main"
           />
-          <StatCard
+          <Statcard
             label="Total demandé"
             value={direction.totalDemande ? direction.totalDemande.toLocaleString("fr-FR") + " DT" : "—"}
-            valueColor="#fbbf24"
+            valueColor="warning"
           />
-          <StatCard
+          <Statcard
             label="Marge disponible"
             value={marge !== null ? marge.toLocaleString("fr-FR") + " DT" : "—"}
-            valueColor={marge !== null && marge >= 0 ? "#4ade80" : "#f87171"}
+            valueColor={marge !== null && marge >= 0 ? "success" : "error"}
             sub={marge !== null ? (marge >= 0 ? "Sous enveloppe" : "Dépassement !") : ""}
           />
         </div>
 
         {/* Tableau des postes budgétaires */}
-        <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "14px", overflow: "hidden", marginBottom: "20px" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <div className="bg-bg-card border border-bg-border rounded-2xl overflow-hidden mb-5">
+          <table className="w-full">
             <thead>
-              <tr style={{ borderBottom: "1px solid #1e293b" }}>
+              <tr className="border-b border-bg-border">
                 {["Poste budgétaire", "Catégorie", "Montant N", "Montant N-1", "Écart"].map((th) => (
-                  <th key={th} style={{ padding: "12px 16px", textAlign: "left", color: "#475569", fontSize: "11px", textTransform: "uppercase", fontWeight: "600" }}>
+                  <th key={th} className="px-4 py-3 text-left text-xs font-semibold uppercase text-text-tertiary">
                     {th}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-bg-border">
               {!direction.postes || direction.postes.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ padding: "40px", textAlign: "center", color: "#475569", fontSize: "13px" }}>
+                  <td colSpan="5" className="px-4 py-10 text-center text-sm text-text-tertiary">
                     Aucun poste budgétaire soumis
                   </td>
                 </tr>
               ) : (
                 direction.postes.map((p, i) => (
-                  <tr key={i} style={{ borderBottom: "1px solid #1e293b" }}>
-                    <td style={{ padding: "12px 16px", color: "#ffffff", fontSize: "13px", fontWeight: "500" }}>{p.nom}</td>
-                    <td style={{ padding: "12px 16px" }}>
-                      <span style={{ background: "#1e1b4b", color: "#a5b4fc", padding: "3px 10px", borderRadius: "6px", fontSize: "11px" }}>
+                  <tr key={i}>
+                    <td className="px-4 py-3 text-text-primary text-sm font-medium">{p.nom}</td>
+                    <td className="px-4 py-3">
+                      <span className="bg-accent-main/10 text-accent-main px-2.5 py-1 rounded-md text-xs">
                         {p.categorie}
                       </span>
                     </td>
-                    <td style={{ padding: "12px 16px", color: "#ffffff", fontFamily: "monospace", fontSize: "13px" }}>
+                    <td className="px-4 py-3 text-text-primary font-mono text-sm">
                       {p.montant?.toLocaleString("fr-FR")} DT
                     </td>
-                    <td style={{ padding: "12px 16px", color: "#64748b", fontFamily: "monospace", fontSize: "13px" }}>
+                    <td className="px-4 py-3 text-text-secondary font-mono text-sm">
                       {p.montantN1?.toLocaleString("fr-FR")} DT
                     </td>
-                    <td style={{ padding: "12px 16px" }}>
-                      <EcartPill demande={p.montant} alloue={p.montantN1} />
+                    <td className="px-4 py-3">
+                      <Ecartpill demande={p.montant} alloue={p.montantN1} />
                     </td>
                   </tr>
                 ))
@@ -165,30 +156,25 @@ export default function DGDetail() {
           </table>
         </div>
 
-{/* Commentaire DG si déjà traité */}
+        {/* Commentaire DG si déjà traité */}
         {direction.commentaireDG && (
-          <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px", padding: "16px", marginBottom: "20px" }}>
-            <p style={{ color: "#475569", fontSize: "11px", margin: "0 0 6px 0" }}>Commentaire DG</p>
-            <p style={{ color: "#cbd5e1", fontSize: "13px", margin: 0 }}>{direction.commentaireDG}</p>
+          <div className="bg-bg-card border border-bg-border rounded-xl p-4 mb-5">
+            <p className="text-text-tertiary text-xs mb-1.5">Commentaire DG</p>
+            <p className="text-text-secondary text-sm">{direction.commentaireDG}</p>
           </div>
         )}
 
-        {/* Assistant IA - Analyse du budget */}
+        {/* Assistant IA */}
         {direction.statut === "en_attente" && (
           <AIAssistantPanel direction={direction} />
         )}
 
-        {/* Bouton décision — uniquement si en attente */}
+        {/* Bouton décision */}
         {direction.statut === "en_attente" && (
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <div className="flex justify-end">
             <button
               onClick={() => setShowModal(true)}
-              style={{
-                background: "#4f46e5", border: "none",
-                color: "#ffffff", fontWeight: "600",
-                padding: "12px 24px", borderRadius: "10px",
-                fontSize: "14px", cursor: "pointer"
-              }}
+              className="bg-accent-main text-text-primary font-semibold px-6 py-3 rounded-xl text-sm hover:bg-accent-hover transition-colors"
             >
               Prendre une décision
             </button>
@@ -198,7 +184,7 @@ export default function DGDetail() {
 
       {/* Modale de décision */}
       {showModal && (
-        <ModaleDecision
+        <Modaledecision
           direction={direction}
           onClose={() => setShowModal(false)}
           onConfirm={handleDecision}
@@ -207,3 +193,4 @@ export default function DGDetail() {
     </div>
   )
 }
+

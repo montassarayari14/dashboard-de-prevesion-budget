@@ -1,21 +1,19 @@
-// Carte KPI simple : titre, valeur, sous-titre
-export default function StatCard({ label, value, sub, valueColor }) {
+// Carte KPI theme-aware
+export default function StatCard({ label, value, sub, valueColor = 'text-primary' }) {
   return (
-    <div style={{
-      background: "#0f172a",
-      border: "1px solid #1e293b",
-      borderRadius: "12px",
-      padding: "16px"
-    }}>
-      <p style={{ color: "#64748b", fontSize: "10px", textTransform: "uppercase", letterSpacing: "1px", margin: "0 0 8px 0" }}>
+    <div className="bg-bg-card border border-bg-border rounded-2xl p-4 shadow-sm">
+      <p className="text-text-tertiary uppercase text-xs tracking-wide mb-2 font-medium">
         {label}
       </p>
-      <p style={{ color: valueColor || "#ffffff", fontSize: "22px", fontWeight: "700", margin: "0 0 4px 0" }}>
+      <p className={`text-2xl font-bold mb-1 ${valueColor}`}>
         {value}
       </p>
       {sub && (
-        <p style={{ color: "#475569", fontSize: "11px", margin: 0 }}>{sub}</p>
+        <p className="text-text-secondary text-xs">
+          {sub}
+        </p>
       )}
     </div>
   )
 }
+

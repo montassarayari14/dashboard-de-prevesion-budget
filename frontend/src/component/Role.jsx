@@ -16,9 +16,9 @@ export default function Roles({ users }) {
   }
 
   return (
-    <div className="bg-[#0f172a] border border-slate-800 rounded-2xl p-6">
+    <div className="bg-[#FFFFFF] border border-gray-200 rounded-2xl p-6 shadow-sm">
 
-      <h2 className="text-xl font-semibold mb-6">
+      <h2 className="text-xl font-semibold mb-6 text-[#111827]">
         Répartition des rôles
       </h2>
 
@@ -27,7 +27,7 @@ export default function Roles({ users }) {
         number={admins}
         percent={`${calcul(admins)}%`}
         width={`${calcul(admins)}%`}
-        color="bg-indigo-400"
+        color="bg-[#2563EB]"
       />
 
       <RoleItem
@@ -35,7 +35,7 @@ export default function Roles({ users }) {
         number={directeurs}
         percent={`${calcul(directeurs)}%`}
         width={`${calcul(directeurs)}%`}
-        color="bg-yellow-400"
+        color="bg-[#F59E0B]"
       />
 
       <RoleItem
@@ -43,7 +43,7 @@ export default function Roles({ users }) {
         number={generals}
         percent={`${calcul(generals)}%`}
         width={`${calcul(generals)}%`}
-        color="bg-purple-400"
+        color="bg-[#16A34A]"
       />
 
     </div>

@@ -62,7 +62,7 @@ export default function App() {
       <Route path="/dg/parametres"   element={<PrivateRoute><DGParametres /></PrivateRoute>} />
       <Route path="/dg/ai-assistant" element={<PrivateRoute><AIAssistant /></PrivateRoute>} />
 
-      {/* URL inconnue → login */}
+      {/* URL inconnue vers login */}
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   )

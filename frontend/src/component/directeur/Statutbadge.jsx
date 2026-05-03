@@ -1,9 +1,9 @@
 // Badge de statut — cohérent avec l'interface DG
 const config = {
-  brouillon:  { bg: "#1e293b",  color: "#94a3b8", label: "Brouillon"       },
-  en_attente: { bg: "#451a03",  color: "#fbbf24", label: "Soumis à la DG"  },
-  approuve:   { bg: "#052e16",  color: "#4ade80", label: "Approuvé"        },
-  rejete:     { bg: "#450a0a",  color: "#f87171", label: "Rejeté"          },
+  brouillon:  { bg: "#E5E7EB",  color: "#6B7280", label: "Brouillon"       },
+  en_attente: { bg: "#FEF3C7",  color: "#F59E0B", label: "Soumis à la DG"  },
+  approuve:   { bg: "#DCFCE7",  color: "#16A34A", label: "Approuvé"        },
+  rejete:     { bg: "#FEE2E2",  color: "#DC2626", label: "Rejeté"          },
 }
 
 export default function StatutBadge({ statut }) {

@@ -132,7 +132,7 @@ export default function LoginPage() {
               <p className="text-red-400 text-xs">{erreur}</p>
               {tentativesRestantes !== null && tentativesRestantes <= 2 && (
                 <p className="text-red-300 text-xs mt-1">
-                  ⚠ Encore {tentativesRestantes} tentative(s) avant blocage du compte.
+                  Attention : encore {tentativesRestantes} tentative(s) avant blocage du compte.
                 </p>
               )}
             </div>

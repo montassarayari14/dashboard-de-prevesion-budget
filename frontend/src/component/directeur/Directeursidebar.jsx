@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
 
-// ── 6 directions fixes — même liste que partout dans le projet ──
+// ── 6 directions fixes ──
 const NOMS_DIRECTIONS = {
   AI: "Audit Interne",
   AJ: "Affaires Juridiques",
@@ -23,7 +23,7 @@ export default function DirecteurSidebar() {
   const navigate = useNavigate()
   const user = JSON.parse(localStorage.getItem("user") || "{}")
 
-  // Nom complet de la direction depuis le code (ex: "DI" → "Direction Informatique")
+  // Nom complet de la direction
   const nomDirection = NOMS_DIRECTIONS[user.direction] || user.direction || "Direction"
 
   function logout() {
@@ -32,35 +32,33 @@ export default function DirecteurSidebar() {
     navigate("/login")
   }
 
+// Sidebar theme-aware (Directeur)
   return (
-    <div style={{
-      width: "210px", minHeight: "100vh", background: "#0d1424",
-      borderRight: "1px solid #1e293b", display: "flex",
-      flexDirection: "column", justifyContent: "space-between"
-    }}>
+    <div className="w-52 min-h-screen bg-sidebar-dir border-r border-bg-border/50 flex flex-col justify-between flex-shrink-0">
+
       <div>
         {/* En-tête sidebar */}
-        <div style={{ padding: "20px 16px", borderBottom: "1px solid #1e293b" }}>
-          <p style={{ color: "#c7d2fe", fontWeight: "700", fontSize: "13px", margin: "0 0 2px 0", lineHeight: "1.3" }}>
+        <div className="p-5 border-b border-blue-700">
+          <p className="text-white font-bold text-sm">
             {nomDirection}
           </p>
-          <p style={{ color: "#475569", fontSize: "11px", margin: "0" }}>
+          <p className="text-blue-200 text-xs">
             Campagne 2025
           </p>
         </div>
 
         {/* Navigation */}
-        <nav style={{ padding: "8px" }}>
+        <nav className="p-2 mt-1">
           {navLinks.map((link) => {
             const isActive = location.pathname === link.path
             return (
-              <Link key={link.path} to={link.path} style={{
-                display: "block", padding: "9px 12px", marginBottom: "2px",
-                borderRadius: "8px", textDecoration: "none", fontSize: "13px",
-                color: isActive ? "#a5b4fc" : "#64748b",
-                background: isActive ? "#1e1b4b" : "transparent",
-                borderLeft: isActive ? "2px solid #6366f1" : "2px solid transparent",
-              }}>
+              <Link key={link.path} to={link.path}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm mb-0.5 transition-colors no-underline
+                  ${isActive
+                    ? "bg-blue-600 text-white border-l-2 border-amber-500"
+                    : "text-blue-200 hover:text-white hover:bg-blue-700 border-l-2 border-transparent"
+                  }`}
+              >
                 {link.label}
               </Link>
             )
@@ -69,17 +67,15 @@ export default function DirecteurSidebar() {
       </div>
 
       {/* Profil + déconnexion */}
-      <div style={{ padding: "12px 16px", borderTop: "1px solid #1e293b" }}>
-        <p style={{ color: "#cbd5e1", fontSize: "13px", fontWeight: "600", margin: "0 0 2px 0" }}>
+      <div className="p-4 border-t border-blue-700">
+        <p className="text-white text-sm font-semibold truncate">
           {user.prenom} {user.nom}
         </p>
-        <p style={{ color: "#475569", fontSize: "11px", margin: "0 0 8px 0" }}>
-          Directeur · <span style={{ color: "#818cf8" }}>{user.direction}</span>
+        <p className="text-blue-200 text-xs mb-2">
+          Directeur · <span className="text-amber-500">{user.direction}</span>
         </p>
-        <button
-          onClick={logout}
-          style={{ color: "#f87171", fontSize: "12px", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-        >
+        
+        <button onClick={logout} className="text-red-300 text-xs hover:text-white bg-transparent border-none cursor-pointer p-0">
           Déconnexion
         </button>
       </div>

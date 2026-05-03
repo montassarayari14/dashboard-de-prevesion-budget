@@ -1,55 +1,47 @@
-// Badge de niveau de risque avec design moderne et effets de glow
-// 🟢 FAIBLE | 🟡 MOYEN | 🔴 ÉLEVÉ
-
+// Badge risque IA – Theme-aware
 export default function RiskBadge({ niveau }) {
   const styles = {
-    FAIBLE: {
+FAIBLE: {
       label: "FAIBLE",
-      emoji: "🟢",
-      bgGradient: "from-green-500/20 to-green-500/5",
-      borderColor: "border-green-500/30",
-      textColor: "text-green-400",
-      glow: "shadow-green-500/20",
+      indicator: "Faible",
+      bgGradient: "bg-accent-main/10",
+      borderColor: "border-accent-main/30",
+      textColor: "text-accent-main",
+      glow: "shadow-accent-main/20",
     },
     MOYEN: {
       label: "MOYEN",
-      emoji: "🟡",
-      bgGradient: "from-amber-500/20 to-amber-500/5",
-      borderColor: "border-amber-500/30",
-      textColor: "text-amber-400",
-      glow: "shadow-amber-500/20",
+      indicator: "Moyen",
+      bgGradient: "bg-warning/10",
+      borderColor: "border-warning/30",
+      textColor: "text-warning",
+      glow: "shadow-warning/20",
     },
     ELEVE: {
       label: "ÉLEVÉ",
-      emoji: "🔴",
-      bgGradient: "from-red-500/20 to-red-500/5",
-      borderColor: "border-red-500/30",
-      textColor: "text-red-400",
-      glow: "shadow-red-500/20",
+      indicator: "Élevé",
+      bgGradient: "bg-error/10",
+      borderColor: "border-error/30",
+      textColor: "text-error",
+      glow: "shadow-error/20",
     },
   }
 
   const s = styles[niveau] || styles.MOYEN
-  const className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide border ${s.bgGradient} ${s.borderColor} ${s.textColor} shadow-lg ${s.glow} transition-all duration-300 hover:scale-105`
+  const className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide border ${s.bgGradient} ${s.borderColor} ${s.textColor}`
+
+  const dotColor = niveau === 'FAIBLE' ? 'accent-main' : niveau === 'MOYEN' ? 'warning' : 'error'
   
   return (
     <span className={className}>
       <span className="relative">
-        <span className="absolute inset-0 rounded-full animate-ping opacity-75"
-          style={{ 
-            backgroundColor: niveau === 'FAIBLE' ? '#22c55e' : niveau === 'MOYEN' ? '#f59e0b' : '#ef4444'
-          }}
-        ></span>
-        <span className="relative">{s.emoji}</span>
+        <span className={`absolute inset-0 rounded-full animate-ping opacity-75 bg-${dotColor}`} />
+<span className="relative text-xs uppercase tracking-[0.25em] font-semibold">{s.indicator}</span>
       </span>
       <span>{s.label}</span>
       
-      {/* Indicateur de niveau */}
-      <span className="ml-1 w-1.5 h-1.5 rounded-full" 
-        style={{ 
-          backgroundColor: niveau === 'FAIBLE' ? '#22c55e' : niveau === 'MOYEN' ? '#f59e0b' : '#ef4444'
-        }}
-      ></span>
+      <span className={`ml-1 w-1.5 h-1.5 rounded-full bg-${dotColor}`} />
     </span>
   )
 }
+

@@ -1,9 +1,9 @@
 // Badge coloré selon le statut de la demande
 const styles = {
-  brouillon:  { background: "#1e293b", color: "#94a3b8" },
-  en_attente: { background: "#451a03", color: "#fbbf24" },
-  approuve:   { background: "#052e16", color: "#4ade80" },
-  rejete:     { background: "#450a0a", color: "#f87171" },
+  brouillon:  { background: "#E5E7EB", color: "#6B7280" },
+  en_attente: { background: "#FEF3C7", color: "#F59E0B" },
+  approuve:   { background: "#DCFCE7", color: "#16A34A" },
+  rejete:     { background: "#FEE2E2", color: "#DC2626" },
 }
 
 const labels = {
