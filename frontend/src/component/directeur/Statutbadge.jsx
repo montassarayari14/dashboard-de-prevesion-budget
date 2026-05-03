@@ -1,19 +1,19 @@
-// Badge de statut — cohérent avec l'interface DG
-const config = {
-  brouillon:  { bg: "#E5E7EB",  color: "#6B7280", label: "Brouillon"       },
-  en_attente: { bg: "#FEF3C7",  color: "#F59E0B", label: "Soumis à la DG"  },
-  approuve:   { bg: "#DCFCE7",  color: "#16A34A", label: "Approuvé"        },
-  rejete:     { bg: "#FEE2E2",  color: "#DC2626", label: "Rejeté"          },
-}
+import { useTheme } from "../../hooks/useTheme"
 
 export default function StatutBadge({ statut }) {
+  const { t } = useTheme()
+
+  const config = {
+    brouillon:  { classes: t.badgeBrouillon, label: "Brouillon"       },
+    en_attente: { classes: t.badgeAttente,   label: "Soumis à la DG"  },
+    approuve:   { classes: t.badgeApprouve,  label: "Approuvé"        },
+    rejete:     { classes: t.badgeRejete,    label: "Rejeté"          },
+  }
+
   const c = config[statut] || config.brouillon
+
   return (
-    <span style={{
-      background: c.bg, color: c.color,
-      padding: "3px 10px", borderRadius: "999px",
-      fontSize: "11px", fontWeight: "600",
-    }}>
+    <span className={`${c.classes} px-[10px] py-[3px] rounded-full text-[11px] font-semibold`}>
       {c.label}
     </span>
   )

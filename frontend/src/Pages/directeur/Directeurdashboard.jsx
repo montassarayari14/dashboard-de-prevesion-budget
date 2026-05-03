@@ -2,245 +2,251 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import DirecteurSidebar from "../../component/directeur/DirecteurSidebar"
 import StatutBadge from "../../component/directeur/StatutBadge"
+import { useTheme } from "../../hooks/useTheme"
 import API from "../../api/axios"
+
+// ── Jauge circulaire simple ─────────────────────────────────────────────────
+function CircleGauge({ pct, isLight }) {
+  const r      = 34
+  const cx     = 42
+  const cy     = 42
+  const circ   = 2 * Math.PI * r
+  const offset = circ - (Math.min(pct, 100) / 100) * circ
+  const over   = pct > 100
+  const color  = over ? "#EF4444" : (isLight ? "#2563EB" : "#6366f1")
+
+  return (
+    <svg width="84" height="84" viewBox="0 0 84 84">
+      <circle cx={cx} cy={cy} r={r} fill="none"
+        stroke={isLight ? "#E5E7EB" : "#1e293b"} strokeWidth="8" />
+      <circle cx={cx} cy={cy} r={r} fill="none"
+        stroke={color} strokeWidth="8"
+        strokeDasharray={circ}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        transform={`rotate(-90 ${cx} ${cy})`}
+      />
+      <text x={cx} y={cy + 5} textAnchor="middle"
+        fontSize="14" fontWeight="700" fill={color}>
+        {pct}%
+      </text>
+    </svg>
+  )
+}
 
 export default function DirecteurDashboard() {
   const [direction, setDirection] = useState(null)
   const [loading, setLoading]     = useState(true)
-  const navigate = useNavigate()
-  const user = JSON.parse(localStorage.getItem("user") || "{}")
+  const { isLight, t }            = useTheme()
+  const navigate                  = useNavigate()
 
   useEffect(() => {
-    // Charge la direction de l'utilisateur connecté
     API.get("/directions/ma-direction")
       .then((res) => setDirection(res.data))
       .finally(() => setLoading(false))
   }, [])
 
-async function handleSoumettre() {
+  async function handleSoumettre() {
     if (!direction || direction.statut !== "brouillon") return
     if (!window.confirm("Confirmer la soumission à la Direction Générale ?")) return
     try {
-      const res = await API.put(`/directions/${direction._id}/soumettre`, {
-        postes: direction.postes
-      })
+      const res = await API.put(`/directions/${direction._id}/soumettre`, { postes: direction.postes })
       setDirection(res.data)
     } catch {
       alert("Erreur lors de la soumission")
     }
   }
 
-  async function handleReset() {
-    if (!direction || direction.statut === "brouillon") return
-    if (!window.confirm("Réinitialiser la demande ? Toutes les décisions précédentes seront réinitialisées.")) return
-    try {
-      const res = await API.put(`/directions/${direction._id}/reset`)
-      setDirection(res.data)
-      alert("Demande réinitialisée. Vous pouvez maintenant créer ou modifier votre budget.")
-      navigate("/direction/budget")
-    } catch {
-      alert("Erreur lors de la réinitialisation")
-    }
-  }
-
-  async function handleNewRequest() {
-    if (!direction || direction.statut === "brouillon") return
-    if (!window.confirm("Démarrer une nouvelle demande vide ? Les postes précédents seront supprimés.")) return
-    try {
-      const res = await API.put(`/directions/${direction._id}/reset?clear=true`)
-      setDirection(res.data)
-      alert("Nouvelle demande initialisée. Vous pouvez maintenant saisir un nouveau budget.")
-      navigate("/direction/budget")
-    } catch {
-      alert("Erreur lors de l'initialisation de la nouvelle demande")
-    }
-  }
-
-if (loading) return (
-    <div style={{ minHeight: "100vh", background: "#F3F4F6", display: "flex" }}>
+  if (loading) return (
+    <div className={`min-h-screen ${t.pageBg} flex`}>
       <DirecteurSidebar />
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#6B7280" }}>Chargement...</p>
+      <div className="flex-1 flex items-center justify-center">
+        <p className={t.textSub}>Chargement...</p>
       </div>
     </div>
   )
 
   if (!direction) return (
-    <div style={{ minHeight: "100vh", background: "#F3F4F6", display: "flex" }}>
+    <div className={`min-h-screen ${t.pageBg} flex`}>
       <DirecteurSidebar />
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#DC2626" }}>Aucune direction assignée. Contactez l'administrateur.</p>
+      <div className="flex-1 flex items-center justify-center">
+        <p className={t.danger}>Aucune direction assignée. Contactez l'administrateur.</p>
       </div>
     </div>
   )
 
-  const totalEstime  = direction.postes?.reduce((s, p) => s + (p.montant || 0), 0) || 0
-  const totalN1      = direction.postes?.reduce((s, p) => s + (p.montantN1 || 0), 0) || 0
-  const reste        = (direction.budget || 0) - totalEstime
-  const pctUtil      = direction.budget ? Math.round((totalEstime / direction.budget) * 100) : 0
-  const pctVsN1      = totalN1 > 0 ? Math.round(((totalEstime - totalN1) / totalN1) * 100) : 0
+  // ── Calculs — inchangés ────────────────────────────────────────────────────
+  const totalEstime = direction.postes?.reduce((s, p) => s + (p.montant || 0), 0) || 0
+  const totalN1     = direction.postes?.reduce((s, p) => s + (p.montantN1 || 0), 0) || 0
+  const reste       = (direction.budget || 0) - totalEstime
+  const pctUtil     = direction.budget ? Math.round((totalEstime / direction.budget) * 100) : 0
+  const pctVsN1     = totalN1 > 0 ? Math.round(((totalEstime - totalN1) / totalN1) * 100) : 0
 
-  // Répartition par catégorie
   const parCategorie = {}
   direction.postes?.forEach((p) => {
     parCategorie[p.categorie] = (parCategorie[p.categorie] || 0) + (p.montant || 0)
   })
 
   const catColors = {
-    "Informatique":   "#6366f1",
-    "RH / Formation": "#a855f7",
-    "Infrastructure": "#f59e0b",
-    "Général":        "#22c55e",
-    "Autre":          "#64748b",
+    "Informatique":   isLight ? "#2563EB" : "#6366f1",
+    "RH / Formation": isLight ? "#7C3AED" : "#a855f7",
+    "Infrastructure": isLight ? "#D97706" : "#f59e0b",
+    "Général":        isLight ? "#16A34A" : "#22c55e",
+    "Autre":          isLight ? "#64748B" : "#64748b",
   }
 
-return (
-    <div style={{ minHeight: "100vh", background: "#F3F4F6", color: "#111827", display: "flex" }}>
+  const kpis = [
+    { label: "Budget alloué",    value: `${(direction.budget || 0).toLocaleString("fr-FR")} DT`, color: isLight ? "text-[#2563EB]" : "text-[#818cf8]" },
+    { label: "Total estimé",     value: `${totalEstime.toLocaleString("fr-FR")} DT`,             color: isLight ? "text-[#D97706]" : "text-[#fbbf24]" },
+    { label: "Reste disponible", value: `${reste.toLocaleString("fr-FR")} DT`,                   color: reste >= 0 ? (isLight ? "text-[#16A34A]" : "text-[#4ade80]") : "text-red-500" },
+    { label: "vs 2024",          value: `${pctVsN1 > 0 ? "+" : ""}${pctVsN1}%`,                 color: isLight ? "text-[#7C3AED]" : "text-[#c084fc]" },
+  ]
+
+  return (
+    <div className={`min-h-screen ${t.pageBg} flex`}>
       <DirecteurSidebar />
 
-      <div style={{ flex: 1, padding: "24px" }}>
+      <div className="flex-1 p-8">
 
-        {/* En-tête */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
+        {/* ── En-tête ── */}
+        <div className="flex justify-between items-start mb-8">
           <div>
-            <h1 style={{ fontSize: "28px", fontWeight: "700", margin: "0 0 4px 0" }}>Tableau de bord</h1>
-            <p style={{ color: "#6B7280", margin: 0 }}>Direction {direction.nom} · Campagne 2025</p>
+            <h1 className={`text-[26px] font-bold mb-2 ${t.textMain}`}>Tableau de bord</h1>
+            <p className={`${t.textSub} text-[14px]`}>
+              Direction {direction.nom} · Campagne 2025
+            </p>
           </div>
           <StatutBadge statut={direction.statut || "brouillon"} />
         </div>
 
-        {/* KPIs */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", marginBottom: "20px" }}>
-          {[
-            { label: "Budget alloué",    value: `${(direction.budget || 0).toLocaleString("fr-FR")} DT`,  color: "#2563EB" },
-            { label: "Total estimé",     value: `${totalEstime.toLocaleString("fr-FR")} DT`,              color: "#F59E0B" },
-            { label: "Reste disponible", value: `${reste.toLocaleString("fr-FR")} DT`,                    color: reste >= 0 ? "#16A34A" : "#DC2626" },
-            { label: "vs 2024",          value: `${pctVsN1 > 0 ? "+" : ""}${pctVsN1}%`,                  color: "#F59E0B" },
-          ].map((k) => (
-            <div key={k.label} style={{ background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "16px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-              <p style={{ color: "#6B7280", fontSize: "10px", textTransform: "uppercase", letterSpacing: "1px", margin: "0 0 8px 0" }}>{k.label}</p>
-              <p style={{ color: k.color, fontSize: "22px", fontWeight: "700", margin: 0 }}>{k.value}</p>
+        {/* ── KPIs ── */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          {kpis.map((k) => (
+            <div key={k.label} className={`${t.cardBg} border ${t.border} rounded-xl p-5`}>
+              <p className={`${t.textSub} text-[11px] uppercase tracking-wide mb-3`}>{k.label}</p>
+              <p className={`${k.color} text-[22px] font-bold leading-none`}>{k.value}</p>
             </div>
           ))}
         </div>
 
-        {/* Grille principale */}
-        <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: "16px" }}>
+        {/* ── Grille principale ── */}
+        <div className="grid grid-cols-[3fr_2fr] gap-5">
 
-{/* Répartition par catégorie */}
-          <div style={{ background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: "14px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-            <h2 style={{ fontSize: "14px", fontWeight: "600", margin: "0 0 16px 0" }}>Répartition par catégorie</h2>
-            {Object.entries(parCategorie).map(([cat, montant]) => {
-              const pct = totalEstime > 0 ? Math.round((montant / totalEstime) * 100) : 0
-              return (
-                <div key={cat} style={{ marginBottom: "12px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px" }}>
-                    <span style={{ color: "#6B7280" }}>{cat}</span>
-                    <span style={{ color: catColors[cat] || "#6B7280", fontFamily: "monospace" }}>
-                      {montant.toLocaleString("fr-FR")} DT · {pct}%
-                    </span>
+          {/* Répartition par catégorie */}
+          <div className={`${t.cardBg} border ${t.border} rounded-xl p-6`}>
+            <h2 className={`${t.textMain} text-[15px] font-semibold mb-5`}>Répartition par catégorie</h2>
+
+            {Object.keys(parCategorie).length === 0 ? (
+              <p className={`${t.textSub} text-[13px]`}>Aucun poste saisi.</p>
+            ) : (
+              Object.entries(parCategorie).map(([cat, montant]) => {
+                const pct   = totalEstime > 0 ? Math.round((montant / totalEstime) * 100) : 0
+                const color = catColors[cat] || "#64748b"
+                return (
+                  <div key={cat} className="mb-4 last:mb-0">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className={`${t.textSub} text-[13px]`}>{cat}</span>
+                      <span className="font-mono text-[13px] font-medium" style={{ color }}>
+                        {montant.toLocaleString("fr-FR")} DT · {pct}%
+                      </span>
+                    </div>
+                    <div className={`${t.trackBg} rounded-full h-[6px]`}>
+                      <div
+                        className="h-[6px] rounded-full"
+                        style={{ width: `${pct}%`, background: color }}
+                      />
+                    </div>
                   </div>
-                  <div style={{ background: "#E5E7EB", borderRadius: "4px", height: "5px" }}>
-                    <div style={{ width: `${pct}%`, height: "5px", borderRadius: "4px", background: catColors[cat] || "#6B7280" }} />
-                  </div>
-                </div>
-              )
-            })}
-            <div style={{ borderTop: "1px solid #E5E7EB", paddingTop: "10px", marginTop: "8px", display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
-              <span style={{ color: "#6B7280" }}>{direction.postes?.length || 0} postes de dépenses</span>
-              <span style={{ color: "#F59E0B", fontWeight: "600" }}>
+                )
+              })
+            )}
+
+            <div className={`border-t ${t.border} mt-5 pt-4 flex justify-between items-center`}>
+              <span className={`${t.textSub} text-[13px]`}>
+                {direction.postes?.length || 0} postes de dépenses
+              </span>
+              <span className={`text-[13px] font-semibold ${isLight ? "text-[#D97706]" : "text-[#fbbf24]"}`}>
                 {totalEstime.toLocaleString("fr-FR")} / {(direction.budget || 0).toLocaleString("fr-FR")} DT
               </span>
             </div>
           </div>
 
-          {/* Droite : jauge + statut */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* Droite */}
+          <div className="flex flex-col gap-5">
 
-{/* Jauge utilisation */}
-            <div style={{ background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: "14px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-              <h2 style={{ fontSize: "14px", fontWeight: "600", margin: "0 0 12px 0" }}>Utilisation de l'enveloppe</h2>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-                <span style={{ color: "#6B7280", fontSize: "12px" }}>{totalEstime.toLocaleString("fr-FR")} / {(direction.budget || 0).toLocaleString("fr-FR")} DT</span>
-                <span style={{ color: pctUtil > 100 ? "#DC2626" : "#2563EB", fontWeight: "700", fontSize: "18px" }}>{pctUtil}%</span>
+            {/* Jauge circulaire */}
+            <div className={`${t.cardBg} border ${t.border} rounded-xl p-6`}>
+              <h2 className={`${t.textMain} text-[15px] font-semibold mb-4`}>Utilisation de l'enveloppe</h2>
+
+              <div className="flex items-center gap-5">
+                <CircleGauge pct={pctUtil} isLight={isLight} />
+                <div className="flex flex-col gap-2 text-[13px]">
+                  <div>
+                    <p className={`${t.textSub} text-[11px] mb-[2px]`}>Estimé</p>
+                    <p className={`${isLight ? "text-[#D97706]" : "text-[#fbbf24]"} font-mono font-semibold`}>
+                      {totalEstime.toLocaleString("fr-FR")} DT
+                    </p>
+                  </div>
+                  <div>
+                    <p className={`${t.textSub} text-[11px] mb-[2px]`}>Alloué</p>
+                    <p className={`${isLight ? "text-[#2563EB]" : "text-[#818cf8]"} font-mono font-semibold`}>
+                      {(direction.budget || 0).toLocaleString("fr-FR")} DT
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div style={{ background: "#E5E7EB", borderRadius: "6px", height: "8px" }}>
-                <div style={{ width: `${Math.min(pctUtil, 100)}%`, height: "8px", borderRadius: "6px", background: pctUtil > 100 ? "#DC2626" : "#2563EB" }} />
-              </div>
+
               {pctUtil > 100 && (
-                <p style={{ color: "#DC2626", fontSize: "11px", marginTop: "6px" }}>Dépassement de l'enveloppe détecté.</p>
+                <p className={`${t.danger} text-[12px] mt-3 font-medium`}>
+                  ⚠ Dépassement de l'enveloppe
+                </p>
               )}
             </div>
 
-            {/* Statut de la demande */}
-            <div style={{ background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: "14px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-              <h2 style={{ fontSize: "14px", fontWeight: "600", margin: "0 0 14px 0" }}>Statut de la demande</h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "13px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#6B7280" }}>Statut actuel</span>
+            {/* Statut */}
+            <div className={`${t.cardBg} border ${t.border} rounded-xl p-6`}>
+              <h2 className={`${t.textMain} text-[15px] font-semibold mb-4`}>Statut de la demande</h2>
+
+              <div className="flex flex-col gap-3 text-[13px]">
+                <div className="flex justify-between items-center">
+                  <span className={t.textSub}>Statut actuel</span>
                   <StatutBadge statut={direction.statut || "brouillon"} />
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#6B7280" }}>Soumis à la DG</span>
-                  <span style={{ color: direction.soumisLe ? "#16A34A" : "#6B7280", fontFamily: "monospace", fontSize: "12px" }}>
-                    {direction.soumisLe ? new Date(direction.soumisLe).toLocaleDateString("fr-FR") : "Non encore"}
+                <div className="flex justify-between items-center">
+                  <span className={t.textSub}>Soumis à la DG</span>
+                  <span className={`font-mono text-[12px] ${direction.soumisLe ? (isLight ? "text-[#16A34A]" : "text-[#4ade80]") : t.textMute}`}>
+                    {direction.soumisLe
+                      ? new Date(direction.soumisLe).toLocaleDateString("fr-FR")
+                      : "Non encore"}
                   </span>
                 </div>
                 {direction.commentaireDG && (
-                  <div style={{ background: "#FEF3C7", border: "1px solid #F59E0B", borderRadius: "8px", padding: "10px" }}>
-                    <p style={{ color: "#F59E0B", fontSize: "11px", fontWeight: "600", margin: "0 0 4px 0" }}>Commentaire DG</p>
-                    <p style={{ color: "#111827", fontSize: "12px", margin: 0 }}>{direction.commentaireDG}</p>
+                  <div className={`${t.warningBg} border ${t.warningBdr} rounded-lg px-3 py-[10px] mt-1`}>
+                    <p className={`${t.warning} text-[11px] font-semibold mb-1`}>Commentaire DG</p>
+                    <p className={`${t.warning} text-[12px] opacity-90`}>{direction.commentaireDG}</p>
                   </div>
                 )}
               </div>
 
-{/* Bouton soumettre */}
               {direction.statut === "brouillon" && (
-                <button onClick={handleSoumettre} style={{
-                  width: "100%", marginTop: "14px", padding: "10px",
-                  background: "#2563EB", border: "none", borderRadius: "10px",
-                  color: "#FFFFFF", fontSize: "13px", fontWeight: "600", cursor: "pointer"
-                }}>
+                <button
+                  onClick={handleSoumettre}
+                  disabled={!direction?.postes?.length}
+                  className={`w-full mt-5 py-[11px] border rounded-[10px] text-[13px] font-semibold cursor-pointer disabled:opacity-40 ${t.btnPrimary}`}
+                >
                   Soumettre à la DG
                 </button>
               )}
               {direction.statut === "rejete" && (
-                <>
-                  <button onClick={() => navigate("/direction/budget")} style={{
-                    width: "100%", marginTop: "14px", padding: "10px",
-                    background: "#DC2626", border: "none", borderRadius: "10px",
-                    color: "#FFFFFF", fontSize: "13px", fontWeight: "600", cursor: "pointer"
-                  }}>
-                    Réviser et resoumettre
-                  </button>
-                  <button onClick={handleNewRequest} style={{
-                    width: "100%", marginTop: "10px", padding: "10px",
-                    background: "#2563EB", border: "none", borderRadius: "10px",
-                    color: "#FFFFFF", fontSize: "13px", fontWeight: "600", cursor: "pointer"
-                  }}>
-                    Nouvelle demande
-                  </button>
-                </>
-              )}
-              {direction.statut === "approuve" && (
-                <button onClick={handleNewRequest} style={{
-                  width: "100%", marginTop: "14px", padding: "10px",
-                  background: "#2563EB", border: "none", borderRadius: "10px",
-                  color: "#FFFFFF", fontSize: "13px", fontWeight: "600", cursor: "pointer"
-                }}>
-                  Nouvelle demande
-                </button>
-              )}
-              {direction.statut === "en_attente" && (
-                <button onClick={handleReset} style={{
-                  width: "100%", marginTop: "14px", padding: "10px",
-                  background: "#6B7280", border: "none", borderRadius: "10px",
-                  color: "#FFFFFF", fontSize: "13px", fontWeight: "600", cursor: "pointer"
-                }}>
-                  Réinitialiser
+                <button
+                  onClick={() => navigate("/direction/budget")}
+                  className={`w-full mt-5 py-[11px] border rounded-[10px] text-[13px] font-semibold cursor-pointer ${t.btnReject}`}
+                >
+                  Réviser et resoumettre
                 </button>
               )}
             </div>
+
           </div>
         </div>
       </div>

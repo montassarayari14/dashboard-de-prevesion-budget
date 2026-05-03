@@ -1,7 +1,24 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Sidebar from "../component/SideBar"
 import API from "../api/axios"
-import { useTheme } from "../ThemeContext"
+
+const DARK = {
+  pageBg:   "bg-[#050b1a]",
+  textMain: "text-white",
+  textSub:  "text-slate-400",
+  cardBg:   "bg-[#0f172a] border-slate-800",
+  inputBg:  "bg-[#1e293b] border-slate-700 text-white",
+  inputDis: "bg-[#1e293b] border-slate-700 text-slate-500",
+}
+
+const LIGHT = {
+  pageBg:   "bg-[#F3F4F6]",
+  textMain: "text-[#111827]",
+  textSub:  "text-[#6B7280]",
+  cardBg:   "bg-[#FFFFFF] border-[#E5E7EB]",
+  inputBg:  "bg-[#FFFFFF] border-[#D1D5DB] text-[#111827]",
+  inputDis: "bg-[#F9FAFB] border-[#E5E7EB] text-[#9CA3AF]",
+}
 
 export default function ParametresPage() {
   const user = JSON.parse(localStorage.getItem("user") || "{}")
@@ -14,8 +31,27 @@ export default function ParametresPage() {
   const [msgPass, setMsgPass]     = useState("")
   const [errPass, setErrPass]     = useState("")
 
-const { theme, toggleTheme } = useTheme()
-  const isLight = theme === "light"
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("theme") !== "light"
+  })
+
+  useEffect(() => {
+    const root = document.documentElement
+    if (darkMode) {
+      root.setAttribute("data-theme", "dark")
+      document.body.style.background = "#050b1a"
+      localStorage.setItem("theme", "dark")
+    } else {
+      root.setAttribute("data-theme", "light")
+      document.body.style.background = "#F3F4F6"
+      localStorage.setItem("theme", "light")
+    }
+  }, [darkMode])
+
+  const T = darkMode ? DARK : LIGHT
+
+  const inputClass = `w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#2563EB] transition-colors ${T.inputBg}`
+  const disClass   = `w-full border rounded-xl px-4 py-2.5 text-sm outline-none cursor-not-allowed transition-colors ${T.inputDis}`
 
   async function saveProfil() {
     try {
@@ -29,15 +65,13 @@ const { theme, toggleTheme } = useTheme()
   }
 
   async function savePassword() {
-    setErrPass("")
-    setMsgPass("")
+    setErrPass(""); setMsgPass("")
     if (!ancien || !nouveau || !confirmer) { setErrPass("Veuillez remplir tous les champs"); return }
     if (nouveau !== confirmer)             { setErrPass("Les mots de passe ne correspondent pas"); return }
     if (nouveau.length < 6)               { setErrPass("Minimum 6 caractères"); return }
     try {
       await API.put(`/users/${user.id}/password`, {
-        ancienMotDePasse: ancien,
-        nouveauMotDePasse: nouveau,
+        ancienMotDePasse: ancien, nouveauMotDePasse: nouveau,
       })
       setMsgPass("Mot de passe modifié ✓")
       setAncien(""); setNouveau(""); setConfirmer("")
@@ -47,91 +81,90 @@ const { theme, toggleTheme } = useTheme()
     }
   }
 
-  const inputClass = `w-full ${inputBg} border ${inputBorder} rounded-xl px-4 py-2.5 text-sm ${inputText} outline-none focus:border-blue-500 ${inputPlaceholder}`
-  const disabledClass = `w-full ${inputBg} border ${inputBorder} rounded-xl px-4 py-2.5 text-sm ${isLight ? "text-gray-500" : "text-slate-500"} outline-none cursor-not-allowed`
-  const btnPrimary = isLight ? "bg-[#2563EB] hover:bg-[#1D4ED8]" : "bg-indigo-600 hover:bg-indigo-700"
-  const textBtn = "text-white"
-  const textError = isLight ? "text-red-600" : "text-red-400"
-  const textSuccess = isLight ? "text-green-600" : "text-green-400"
-
   return (
-    <div className="h-screen bg-bg-global text-text-primary flex overflow-hidden">
+    <div className={`h-screen ${T.pageBg} ${T.textMain} flex overflow-hidden transition-colors duration-300`}>
       <Sidebar />
       <div className="flex-1 p-6 overflow-y-auto">
 
         <h1 className="text-3xl font-bold mb-1">Paramètres</h1>
-        <p className="text-text-secondary mb-6">Gérez votre compte</p>
+        <p className={`${T.textSub} mb-6`}>Gérez votre compte</p>
 
         {/* Apparence */}
-        <div className="bg-bg-card border border-bg-border rounded-2xl p-6 mb-4">
-          <h2 className="text-lg font-semibold mb-1 text-text-primary">Apparence</h2>
-          <p className="text-text-secondary text-sm mb-4">Choisissez le thème de l'interface</p>
+        <div className={`border rounded-2xl p-6 mb-4 transition-colors duration-300 ${T.cardBg}`}>
+          <h2 className="text-lg font-semibold mb-1">Apparence</h2>
+          <p className={`${T.textSub} text-sm mb-4`}>Choisissez le thème de l'interface</p>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-text-primary">Mode sombre</p>
-              <p className="text-text-secondary text-xs">{!isLight ? "Activé" : "Désactivé"}</p>
+              <p className="text-sm font-medium">{darkMode ? "Mode sombre" : "Mode clair"}</p>
+              <p className={`text-xs ${T.textSub}`}>
+                {darkMode ? "Interface sombre activée" : "Interface claire activée"}
+              </p>
             </div>
             <button
-              onClick={toggleTheme}
-              className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${isLight ? "bg-gray-400" : "bg-accent-main"}`}
+              onClick={() => setDarkMode(!darkMode)}
+              className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${
+                darkMode ? "bg-indigo-600" : "bg-[#2563EB]"
+              }`}
             >
-              <span className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-all duration-300 ${isLight ? "left-1" : "left-8"}`} />
+              <span className={`absolute top-1 w-5 h-5 rounded-full shadow transition-all duration-300 ${
+                darkMode ? "left-8 bg-white" : "left-1 bg-white"
+              }`} />
             </button>
           </div>
         </div>
 
         {/* Informations du compte */}
-        <div className="bg-bg-card border border-bg-border rounded-2xl p-6 mb-4">
+        <div className={`border rounded-2xl p-6 mb-4 transition-colors duration-300 ${T.cardBg}`}>
           <h2 className="text-lg font-semibold mb-4">Informations du compte</h2>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label className={`block text-xs ${textSub} mb-1`}>Prénom</label>
-              <input type="text" value={user.prenom || ""} disabled className={disabledClass} />
+              <label className={`block text-xs ${T.textSub} mb-1`}>Prénom</label>
+              <input type="text" value={user.prenom || ""} disabled className={disClass} />
             </div>
             <div>
-              <label className={`block text-xs ${textSub} mb-1`}>Nom</label>
-              <input type="text" value={user.nom || ""} disabled className={disabledClass} />
+              <label className={`block text-xs ${T.textSub} mb-1`}>Nom</label>
+              <input type="text" value={user.nom || ""} disabled className={disClass} />
             </div>
           </div>
           <div className="mb-4">
-            <label className={`block text-xs ${textSub} mb-1`}>Rôle</label>
-            <input type="text" value={user.role || ""} disabled className={disabledClass} />
+            <label className={`block text-xs ${T.textSub} mb-1`}>Rôle</label>
+            <input type="text" value={user.role || ""} disabled className={disClass} />
           </div>
           <div className="mb-4">
-            <label className={`block text-xs ${textSub} mb-1`}>Email</label>
+            <label className={`block text-xs ${T.textSub} mb-1`}>Email</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
           </div>
-          {msgProfil && <p className={`${textSuccess} text-xs mb-3`}>{msgProfil}</p>}
+          {msgProfil && <p className="text-[#16A34A] text-xs mb-3">{msgProfil}</p>}
           <button onClick={saveProfil}
-            className={`${btnPrimary} ${textBtn} text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors`}>
+            className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors">
             Sauvegarder l'email
           </button>
         </div>
 
         {/* Changer mot de passe */}
-        <div className="bg-bg-card border border-bg-border rounded-2xl p-6">
-          <h2 className="text-lg font-semibold mb-4 text-text-primary">Changer le mot de passe</h2>
+        <div className={`border rounded-2xl p-6 transition-colors duration-300 ${T.cardBg}`}>
+          <h2 className="text-lg font-semibold mb-4">Changer le mot de passe</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-xs text-text-secondary mb-1">Ancien mot de passe</label>
+              <label className={`block text-xs ${T.textSub} mb-1`}>Ancien mot de passe</label>
               <input type="password" value={ancien} onChange={(e) => setAncien(e.target.value)}
                 placeholder="••••••••" className={inputClass} />
             </div>
             <div>
-              <label className="block text-xs text-text-secondary mb-1">Nouveau mot de passe</label>
+              <label className={`block text-xs ${T.textSub} mb-1`}>Nouveau mot de passe</label>
               <input type="password" value={nouveau} onChange={(e) => setNouveau(e.target.value)}
                 placeholder="••••••••" className={inputClass} />
             </div>
             <div>
-              <label className="block text-xs text-text-secondary mb-1">Confirmer le mot de passe</label>
+              <label className={`block text-xs ${T.textSub} mb-1`}>Confirmer le mot de passe</label>
               <input type="password" value={confirmer} onChange={(e) => setConfirmer(e.target.value)}
                 placeholder="••••••••" className={inputClass} />
             </div>
           </div>
-          {errPass && <p className="text-error text-xs mt-3">{errPass}</p>}
-          {msgPass && <p className="text-success text-xs mt-3">{msgPass}</p>}
+          {errPass && <p className="text-[#DC2626] text-xs mt-3">{errPass}</p>}
+          {msgPass && <p className="text-[#16A34A] text-xs mt-3">{msgPass}</p>}
           <button onClick={savePassword}
-            className="mt-4 bg-accent-main hover:bg-accent-hover text-text-primary text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors">
+            className="mt-4 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors">
             Modifier le mot de passe
           </button>
         </div>

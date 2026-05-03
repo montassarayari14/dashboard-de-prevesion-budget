@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
+import { useTheme } from "../../hooks/useTheme"
 
-// ── 6 directions fixes ──
 const NOMS_DIRECTIONS = {
   AI: "Audit Interne",
   AJ: "Affaires Juridiques",
@@ -15,15 +15,15 @@ const navLinks = [
   { path: "/direction/budget",       label: "Mon budget"      },
   { path: "/direction/statistiques", label: "Statistiques"    },
   { path: "/direction/historique",   label: "Historique"      },
-  { path: "/direction/parametres",  label: "Paramètres"      },
+  { path: "/direction/parametres",   label: "Paramètres"      },
 ]
 
 export default function DirecteurSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
-  const user = JSON.parse(localStorage.getItem("user") || "{}")
+  const { t }    = useTheme()
+  const user     = JSON.parse(localStorage.getItem("user") || "{}")
 
-  // Nom complet de la direction
   const nomDirection = NOMS_DIRECTIONS[user.direction] || user.direction || "Direction"
 
   function logout() {
@@ -32,32 +32,30 @@ export default function DirecteurSidebar() {
     navigate("/login")
   }
 
-// Sidebar theme-aware (Directeur)
   return (
-    <div className="w-52 min-h-screen bg-sidebar-dir border-r border-bg-border/50 flex flex-col justify-between flex-shrink-0">
-
+    <div className={`w-[210px] min-h-screen ${t.sidebarBg} border-r ${t.sidebarDivide} flex flex-col justify-between`}>
       <div>
-        {/* En-tête sidebar */}
-        <div className="p-5 border-b border-blue-700">
-          <p className="text-white font-bold text-sm">
+        {/* En-tête */}
+        <div className={`px-4 py-5 border-b ${t.sidebarDivide}`}>
+          <p className={`${t.sidebarText} font-bold text-[13px] leading-snug mb-[2px]`}>
             {nomDirection}
           </p>
-          <p className="text-blue-200 text-xs">
-            Campagne 2025
-          </p>
+          <p className={`${t.sidebarTextMute} text-[11px]`}>Campagne 2025</p>
         </div>
 
         {/* Navigation */}
-        <nav className="p-2 mt-1">
+        <nav className="p-2">
           {navLinks.map((link) => {
             const isActive = location.pathname === link.path
             return (
-              <Link key={link.path} to={link.path}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm mb-0.5 transition-colors no-underline
-                  ${isActive
-                    ? "bg-blue-600 text-white border-l-2 border-amber-500"
-                    : "text-blue-200 hover:text-white hover:bg-blue-700 border-l-2 border-transparent"
-                  }`}
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`
+                  block px-3 py-[9px] mb-[2px] rounded-lg text-[13px] no-underline
+                  border-l-2 transition-colors
+                  ${isActive ? t.sidebarLinkActive : t.sidebarLinkIdle}
+                `}
               >
                 {link.label}
               </Link>
@@ -67,15 +65,19 @@ export default function DirecteurSidebar() {
       </div>
 
       {/* Profil + déconnexion */}
-      <div className="p-4 border-t border-blue-700">
-        <p className="text-white text-sm font-semibold truncate">
-          {user.prenom} {user.nom}
-        </p>
-        <p className="text-blue-200 text-xs mb-2">
-          Directeur · <span className="text-amber-500">{user.direction}</span>
-        </p>
-        
-        <button onClick={logout} className="text-red-300 text-xs hover:text-white bg-transparent border-none cursor-pointer p-0">
+      <div className={`px-4 py-3 border-t ${t.sidebarDivide}`}>
+        <Link to="/direction/parametres" className="no-underline group">
+          <p className={`${t.sidebarText} text-[13px] font-semibold mb-[2px] transition-colors`}>
+            {user.prenom} {user.nom}
+          </p>
+          <p className={`${t.sidebarTextMute} text-[11px] mb-2`}>
+            Directeur · <span className="text-[#818cf8]">{user.direction}</span>
+          </p>
+        </Link>
+        <button
+          onClick={logout}
+          className="text-red-400 text-xs bg-transparent border-none cursor-pointer p-0"
+        >
           Déconnexion
         </button>
       </div>

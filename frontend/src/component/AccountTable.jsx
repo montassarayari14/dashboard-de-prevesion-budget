@@ -1,10 +1,13 @@
+import { useTheme } from "../hooks/useTheme"
 import AccountRow from "./AccountRow"
 
 export default function AccountTable({ users, onDelete, onToggle }) {
+  const { t } = useTheme()
+
   return (
     <table className="w-full">
       <thead>
-        <tr className="text-slate-400 text-xs uppercase text-left border-b border-slate-800">
+        <tr className={`text-xs uppercase text-left border-b ${t.thead} ${t.border}`}>
           <th className="pb-3 pl-4">Nom</th>
           <th className="pb-3">Email</th>
           <th className="pb-3">Rôle</th>

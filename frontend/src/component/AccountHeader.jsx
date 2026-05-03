@@ -1,11 +1,15 @@
-export default function AccountHeader({ totalUsers, search, setSearch,onNewUser }) {
+import { useTheme } from "../hooks/useTheme"
+
+export default function AccountHeader({ totalUsers, search, setSearch, onNewUser }) {
+  const { t } = useTheme()
+
   return (
     <div className="flex items-start justify-between mb-6">
       <div>
-        <h1  className="text-4xl font-bold text-white mb-2">
+        <h1 className={`text-4xl font-bold mb-2 ${t.textMain}`}>
           Gestion des comptes
         </h1>
-        <p className="text-slate-400">{totalUsers} utilisateurs affichés</p>
+        <p className={t.textSub}>{totalUsers} utilisateurs affichés</p>
       </div>
 
       <div className="flex gap-3">
@@ -14,10 +18,12 @@ export default function AccountHeader({ totalUsers, search, setSearch,onNewUser 
           placeholder="Rechercher..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-[#0f172a] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none"
+          className={`border rounded-xl px-4 py-3 text-sm outline-none transition-colors ${t.input}`}
         />
-
-        <button onClick={onNewUser} className="bg-indigo-500 hover:bg-indigo-600 px-5 py-3 rounded-xl font-medium">
+        <button
+          onClick={onNewUser}
+          className={`px-5 py-3 rounded-xl font-medium transition-colors ${t.btnPrimary}`}
+        >
           + Nouveau compte
         </button>
       </div>

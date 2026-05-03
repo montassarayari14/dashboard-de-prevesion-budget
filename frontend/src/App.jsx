@@ -17,7 +17,7 @@ import DirecteurDashboard    from "./Pages/directeur/DirecteurDashboard"
 import DirecteurBudget       from "./Pages/directeur/DirecteurBudget"
 import DirecteurStatistiques from "./Pages/directeur/DirecteurStatistiques"
 import DirecteurHistorique   from "./Pages/directeur/DirecteurHistorique"
-import DirecteurParametres  from "./Pages/directeur/DirecteurParametres"
+import DirecteurParametres from "./Pages/directeur/DirecteurParametres.jsx"
 
 // ── Axe 3 : Directeur Général ──
 import DGDashboard    from "./Pages/dg/DGDashboard"
@@ -25,8 +25,6 @@ import DGDemandes     from "./Pages/dg/DGDemandes"
 import DGDetail       from "./Pages/dg/DGDetail"
 import DGStatistiques from "./Pages/dg/DGStatistiques"
 import DGHistorique   from "./Pages/dg/DGHistorique"
-import DGParametres  from "./Pages/dg/DGParametres"
-import AIAssistant    from "./component/dg/AIAssistant"
 
 export default function App() {
   return (
@@ -43,14 +41,15 @@ export default function App() {
       <Route path="/admin/logs"         element={<PrivateRoute><AuditPage /></PrivateRoute>} />
       <Route path="/admin/parametres"   element={<PrivateRoute><ParametresPage /></PrivateRoute>} />
 
-{/* ── Axe 2 : Directeur de direction ── */}
+      {/* ── Axe 2 : Directeur de direction ── */}
       <Route path="/direction/dashboard"    element={<PrivateRoute><DirecteurDashboard /></PrivateRoute>} />
       <Route path="/direction/budget"       element={<PrivateRoute><DirecteurBudget /></PrivateRoute>} />
       <Route path="/direction/statistiques" element={<PrivateRoute><DirecteurStatistiques /></PrivateRoute>} />
       <Route path="/direction/historique"   element={<PrivateRoute><DirecteurHistorique /></PrivateRoute>} />
       <Route path="/direction/parametres"   element={<PrivateRoute><DirecteurParametres /></PrivateRoute>} />
 
-{/* ── Axe 3 : Directeur Général ── */}
+
+      {/* ── Axe 3 : Directeur Général ── */}
       <Route path="/dg/dashboard"    element={<PrivateRoute><DGDashboard /></PrivateRoute>} />
       <Route path="/dg/demandes"     element={<PrivateRoute><DGDemandes /></PrivateRoute>} />
       <Route path="/dg/demandes/:id" element={<PrivateRoute><DGDetail /></PrivateRoute>} />
@@ -59,10 +58,8 @@ export default function App() {
       <Route path="/dg/rejetees"     element={<PrivateRoute><DGDemandes /></PrivateRoute>} />
       <Route path="/dg/statistiques" element={<PrivateRoute><DGStatistiques /></PrivateRoute>} />
       <Route path="/dg/historique"   element={<PrivateRoute><DGHistorique /></PrivateRoute>} />
-      <Route path="/dg/parametres"   element={<PrivateRoute><DGParametres /></PrivateRoute>} />
-      <Route path="/dg/ai-assistant" element={<PrivateRoute><AIAssistant /></PrivateRoute>} />
 
-      {/* URL inconnue vers login */}
+      {/* URL inconnue → login */}
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   )

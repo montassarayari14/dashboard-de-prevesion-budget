@@ -14,10 +14,12 @@ API.interceptors.request.use((config) => {
 })
 
 // ✅ Si token expiré (401), renvoie vers /login automatiquement
+// ✅ SAUF si c'est la route de login elle-même (sinon les states sont perdus)
 API.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isLoginRoute = error.config?.url?.includes("/auth/login")
+    if (error.response?.status === 401 && !isLoginRoute) {
       localStorage.removeItem("token")
       localStorage.removeItem("user")
       window.location.href = "/login"
