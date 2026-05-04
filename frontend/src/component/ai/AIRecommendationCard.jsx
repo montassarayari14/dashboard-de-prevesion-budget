@@ -1,8 +1,10 @@
 // Carte Recommandation IA – Theme-aware
 import { useEffect, useState } from "react"
+import { useTheme } from "../../hooks/useTheme"
 import RiskBadge from "./RiskBadge"
 
 export default function AIRecommendationCard({ analyse }) {
+  const { isDark } = useTheme()
   const [animated, setAnimated] = useState(false)
   
   useEffect(() => {
@@ -18,23 +20,23 @@ export default function AIRecommendationCard({ analyse }) {
   return (
     <div className={`rounded-2xl border p-6 transition-all duration-300 hover:shadow-xl hover:shadow-black/20 ${
       isApprove 
-        ? 'bg-success/10 border-success/30' 
-        : 'bg-error/10 border-error/30'
+        ? `${isDark ? 'bg-emerald-950/20 border-emerald-800/40' : 'bg-emerald-50/60 border-emerald-200/60'}` 
+        : `${isDark ? 'bg-red-950/20 border-red-800/40' : 'bg-red-50/60 border-red-200/60'}`
     }`}>
       {/* En-tête verdict */}
       <div className="flex items-center justify-between mb-5">
         <div className={`flex items-center gap-3 px-4 py-2 rounded-xl ${
           isApprove 
-            ? "bg-success/20 border border-success/30" 
-            : "bg-error/20 border border-error/30"
+            ? `${isDark ? "bg-emerald-900/30 border border-emerald-700/50" : "bg-emerald-100/70 border border-emerald-300/70"}` 
+            : `${isDark ? "bg-red-900/30 border border-red-700/50" : "bg-red-100/70 border border-red-300/70"}`
         }`}>
           <span className={`px-2 py-1 rounded-md text-sm font-semibold ${
-            isApprove ? "bg-success/10 text-success" : "bg-error/10 text-error"
+            isApprove ? `${isDark ? "bg-emerald-800/50 text-emerald-200" : "bg-emerald-500/20 text-emerald-700"}` : `${isDark ? "bg-red-800/50 text-red-200" : "bg-red-500/20 text-red-700"}`
           }`}>
             {isApprove ? "Validé" : "Rejeté"}
           </span>
           <span className={`text-xl font-black tracking-wide ${
-            isApprove ? "text-success" : "text-error"
+            isApprove ? `${isDark ? "text-emerald-400" : "text-emerald-700"}` : `${isDark ? "text-red-400" : "text-red-700"}`
           }`}>
             {recommandation}
           </span>
@@ -47,27 +49,27 @@ export default function AIRecommendationCard({ analyse }) {
         {/* Barre score */}
         <div className="flex-1">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-text-tertiary uppercase tracking-wider font-semibold">Score IA</span>
+            <span className={`${isDark ? "text-slate-400" : "text-slate-500"} text-xs uppercase tracking-wider font-semibold`}>Score IA</span>
             <span className={`text-lg font-bold ${
-              score >= 50 ? "text-success" : "text-error"
+              score >= 50 ? `${isDark ? "text-emerald-400" : "text-emerald-700"}` : `${isDark ? "text-red-400" : "text-red-700"}`
             }`}>
               {score}/100
             </span>
           </div>
           
-          <div className="relative h-3 bg-bg-border/50 rounded-full overflow-hidden">
+          <div className={`relative h-3 ${isDark ? "bg-slate-700/50" : "bg-slate-200/70"} rounded-full overflow-hidden`}>
             <div 
-              className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out"
+              className={`absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out ${
+                isApprove ? `${isDark ? "bg-emerald-500" : "bg-emerald-500"}` : `${isDark ? "bg-red-500" : "bg-red-500"}`
+              }`}
               style={{ 
                 width: animated ? `${Math.max(0, Math.min(100, (score + 100) / 2))}%` : '0%'
               }}
-              className={`${
-                isApprove ? "bg-success" : "bg-error"
-              }`}
             />
+
           </div>
           
-          <div className="flex justify-between text-[10px] text-text-tertiary mt-1">
+          <div className={`flex justify-between text-[10px] ${isDark ? "text-slate-500" : "text-slate-500"} mt-1`}>
             <span>-100</span>
             <span>0</span>
             <span>+100</span>

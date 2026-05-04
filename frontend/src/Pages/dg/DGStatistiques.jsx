@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react"
-import Dgsidebar from "../../component/dg/Dgsidebar"
-import Statcard  from "../../component/dg/Statcard"
-
+import DGSidebar from "../../component/dg/Dgsidebar"
+import StatCard  from "../../component/dg/Statcard"
+import { useTheme } from "../../hooks/useTheme"
 import API       from "../../api/axios"
 
 export default function DGStatistiques() {
   const [directions, setDirections] = useState([])
+  const { isLight, t } = useTheme()
 
   useEffect(() => {
     API.get("/directions").then((res) => setDirections(res.data))
@@ -15,65 +16,94 @@ export default function DGStatistiques() {
   const totalDemande = directions.reduce((s, d) => s + (d.totalDemande || 0), 0)
   const tauxGlobal   = totalAlloue > 0 ? Math.round((totalDemande / totalAlloue) * 100) : 0
 
+  const catColors = {
+    "Informatique":   t.barInfo,
+    "RH / Formation": t.barRH,
+    "Infrastructure": t.barInfra,
+    "Général":        t.barGen,
+    "Autre":          t.barAutre,
+  }
+
   return (
-    <div className="min-h-screen bg-bg-global text-text-primary flex">
+    <div className={`min-h-screen ${t.pageBg} flex`}>
+
       <DGSidebar />
 
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-8">
 
         {/* En-tête */}
-        <h1 className="text-3xl font-bold mb-1">Statistiques</h1>
-        <p className="text-text-secondary mb-6">Comparaison inter-directions · 2025 vs 2024</p>
+        <div className="mb-8">
+          <h1 className={`text-[26px] font-bold mb-2 ${t.textMain}`}>Statistiques</h1>
+          <p className={`${t.textSub} text-[14px]`}>Comparaison inter-directions · 2025 vs 2024</p>
+        </div>
 
         {/* Cartes KPI */}
-        <div className="grid grid-cols-4 gap-3 mb-6">
-          <StatCard label="Enveloppe totale 2025" value={`${Math.round(totalAlloue / 1000)}K DT`} sub={`${directions.length} directions`} valueColor="accent-main" />
-          <StatCard label="Total demandé" value={`${Math.round(totalDemande / 1000)}K DT`} valueColor="warning" />
-          <StatCard label="Taux d'utilisation" value={`${tauxGlobal}%`} sub="Des enveloppes allouées" valueColor="success" />
-          <StatCard label="vs Budget 2024" value="+12%" sub="Hausse globale estimée" valueColor="accent-main" />
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className={`${t.cardBg} border ${t.border} rounded-xl p-5`}>
+            <p className={`${t.textSub} text-[11px] uppercase tracking-wide mb-3`}>Enveloppe totale 2025</p>
+            <p className={`${t.kpiBlue} text-[22px] font-bold leading-none`}>{Math.round(totalAlloue / 1000)}K DT</p>
+            <p className={t.textSub}>{directions.length} directions</p>
+          </div>
+          <div className={`${t.cardBg} border ${t.border} rounded-xl p-5`}>
+            <p className={`${t.textSub} text-[11px] uppercase tracking-wide mb-3`}>Total demandé</p>
+            <p className={`${t.kpiAmber} text-[22px] font-bold leading-none`}>{Math.round(totalDemande / 1000)}K DT</p>
+            <p className={t.textSub}>Somme estimations</p>
+          </div>
+          <div className={`${t.cardBg} border ${t.border} rounded-xl p-5`}>
+            <p className={`${t.textSub} text-[11px] uppercase tracking-wide mb-3`}>Taux d'utilisation</p>
+            <p className={`text-[22px] font-bold leading-none ${tauxGlobal > 100 ? "text-red-500" : t.kpiGreen}`}>{tauxGlobal}%</p>
+            <p className={t.textSub}>Des enveloppes allouées</p>
+          </div>
+          <div className={`${t.cardBg} border ${t.border} rounded-xl p-5`}>
+            <p className={`${t.textSub} text-[11px] uppercase tracking-wide mb-3`}>vs Budget 2024</p>
+            <p className={t.kpiBlue}>+12%</p>
+            <p className={t.textSub}>Hausse globale estimée</p>
+          </div>
         </div>
 
         {/* Grille graphiques */}
-        <div className="grid grid-cols-2 gap-4">
-
+        <div className="grid grid-cols-2 gap-5 mb-5">
 
           {/* Comparaison N vs N-1 */}
-          <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "14px", padding: "20px" }}>
-            <h2 style={{ fontSize: "14px", fontWeight: "600", margin: "0 0 20px 0" }}>Budget 2025 vs 2024</h2>
+          <div className={`${t.cardBg} border ${t.border} rounded-xl p-6`}>
+            <h2 className={`${t.textMain} text-[15px] font-semibold mb-5`}>Budget 2025 vs 2024</h2>
 
             {directions.map((d) => {
-const pct2025 = d.budget && d.totalDemande ? Math.min(100, Math.round((d.totalDemande / d.budget) * 100)) : 0
+              const pct2025 = d.budget && d.totalDemande ? Math.min(100, Math.round((d.totalDemande / d.budget) * 100)) : 0
               const pct2024 = d.budgetN1 && d.totalDemandeN1 ? Math.round((d.totalDemandeN1 / d.budgetN1) * 100) : 0
               const delta   = d.totalDemande && d.totalDemandeN1
                 ? Math.round(((d.totalDemande - d.totalDemandeN1) / d.totalDemandeN1) * 100)
                 : null
 
               return (
-                <div key={d.code} style={{ marginBottom: "18px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <span style={{ color: "#818cf8", fontSize: "11px", fontWeight: "700", width: "36px" }}>{d.code}</span>
-                    <div style={{ flex: 1 }}>
+                <div key={d.code} className="mb-4 last:mb-0">
+                  <div className="flex items-center gap-3">
+                    <span className={`${t.kpiBlue} text-[13px] font-semibold`}>{d.code}</span>
+                    <div className="flex-1">
                       {/* Barre N-1 */}
-                      <p style={{ color: "#475569", fontSize: "10px", margin: "0 0 2px 0" }}>
+                      <p className={`${t.textSub} text-[12px] mb-1`}>
                         2024 — {d.totalDemandeN1 ? `${Math.round(d.totalDemandeN1 / 1000)}K` : "—"}
                       </p>
-                      <div style={{ background: "#1e293b", borderRadius: "3px", height: "5px", marginBottom: "6px" }}>
-                        <div style={{ width: `${pct2024}%`, height: "5px", borderRadius: "3px", background: "#334155" }} />
+                      <div className={`${t.trackBg} rounded-[3px] h-[5px] mb-3`}>
+                        <div className="h-[5px] rounded-[3px]" style={{ width: `${pct2024}%`, background: t.barN1 }} />
                       </div>
                       {/* Barre N */}
-                      <p style={{ color: "#818cf8", fontSize: "10px", margin: "0 0 2px 0" }}>
+                      <p className={`${t.kpiBlue} text-[12px] mb-1`}>
                         2025 — {d.totalDemande ? `${Math.round(d.totalDemande / 1000)}K` : "Non soumis"}
                       </p>
-                      <div style={{ background: "#1e293b", borderRadius: "3px", height: "5px" }}>
-                        <div style={{ width: `${pct2025}%`, height: "5px", borderRadius: "3px", background: "#6366f1" }} />
+                      <div className={`${t.trackBg} rounded-[3px] h-[5px]`}>
+                        <div className="h-[5px] rounded-[3px]" style={{ width: `${pct2025}%`, background: t.barInfo }} />
                       </div>
                     </div>
                     {/* Badge écart */}
-                    <span style={{
-                      padding: "2px 8px", borderRadius: "6px", fontSize: "10px", fontWeight: "600", width: "40px", textAlign: "center",
-                      background: delta === null ? "#1e293b" : delta > 0 ? "#450a0a" : "#052e16",
-                      color: delta === null ? "#475569" : delta > 0 ? "#f87171" : "#4ade80"
-                    }}>
+                    <span className={`
+                      px-[6px] py-1 rounded-md text-[11px] font-semibold w-[42px] text-center
+                      ${delta === null 
+                        ? t.textSub 
+                        : delta > 0 
+                          ? "bg-red-500/20 text-red-400 border border-red-500/30" 
+                          : "bg-green-500/20 text-green-400 border border-green-500/30"
+                      }`}>
                       {delta !== null ? `${delta > 0 ? "+" : ""}${delta}%` : "—"}
                     </span>
                   </div>
@@ -83,21 +113,23 @@ const pct2025 = d.budget && d.totalDemande ? Math.min(100, Math.round((d.totalDe
           </div>
 
           {/* Colonne droite */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div className="space-y-5">
 
             {/* Répartition enveloppe */}
-            <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "14px", padding: "20px" }}>
-              <h2 style={{ fontSize: "14px", fontWeight: "600", margin: "0 0 16px 0" }}>Répartition de l'enveloppe</h2>
+            <div className={`${t.cardBg} border ${t.border} rounded-xl p-6`}>
+              <h2 className={`${t.textMain} text-[15px] font-semibold mb-4`}>Répartition de l'enveloppe</h2>
               {directions.map((d) => {
                 const pct = totalAlloue > 0 ? Math.round((d.budget / totalAlloue) * 100) : 0
                 return (
-                  <div key={d.code} style={{ marginBottom: "12px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px" }}>
-                      <span style={{ color: "#94a3b8" }}>{d.code}</span>
-                      <span style={{ color: "#818cf8", fontFamily: "monospace" }}>{pct}% · {d.budget?.toLocaleString("fr-FR")} DT</span>
+                  <div key={d.code} className="mb-3 last:mb-0">
+                    <div className="flex justify-between text-[13px] mb-1">
+                      <span className={t.textSub}>{d.code}</span>
+                      <span className={`font-mono font-medium ${t.kpiBlue}`}>
+                        {pct}% · {d.budget?.toLocaleString("fr-FR")} DT
+                      </span>
                     </div>
-                    <div style={{ background: "#1e293b", borderRadius: "3px", height: "5px" }}>
-                      <div style={{ width: `${pct}%`, height: "5px", borderRadius: "3px", background: "#6366f1" }} />
+                    <div className={`${t.trackBg} rounded-[3px] h-[5px]`}>
+                      <div className="h-[5px] rounded-[3px]" style={{ width: `${pct}%`, background: t.barInfo }} />
                     </div>
                   </div>
                 )
@@ -105,17 +137,19 @@ const pct2025 = d.budget && d.totalDemande ? Math.min(100, Math.round((d.totalDe
             </div>
 
             {/* Taux d'utilisation par direction */}
-            <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "14px", padding: "20px" }}>
-              <h2 style={{ fontSize: "14px", fontWeight: "600", margin: "0 0 16px 0" }}>Taux d'utilisation</h2>
+            <div className={`${t.cardBg} border ${t.border} rounded-xl p-6`}>
+              <h2 className={`${t.textMain} text-[15px] font-semibold mb-4`}>Taux d'utilisation</h2>
               {directions.map((d) => {
-const pct = d.budget && d.totalDemande ? Math.min(100, Math.round((d.totalDemande / d.budget) * 100)) : 0
+                const pct = d.budget && d.totalDemande ? Math.min(100, Math.round((d.totalDemande / d.budget) * 100)) : 0
                 return (
-                  <div key={d.code} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-                    <span style={{ color: "#94a3b8", fontSize: "12px", width: "36px" }}>{d.code}</span>
-                    <div style={{ flex: 1, background: "#1e293b", borderRadius: "3px", height: "5px" }}>
-                      <div style={{ width: `${pct}%`, height: "5px", borderRadius: "3px", background: "#6366f1" }} />
+                  <div key={d.code} className="flex items-center gap-3 mb-3 last:mb-0">
+                    <span className={`${t.textSub} text-[13px]`}>{d.code}</span>
+                    <div className="flex-1">
+                      <div className={`${t.trackBg} rounded-[3px] h-[5px]`}>
+                        <div className="h-[5px] rounded-[3px]" style={{ width: `${pct}%`, background: t.barInfo }} />
+                      </div>
                     </div>
-                    <span style={{ color: pct > 0 ? "#818cf8" : "#334155", fontSize: "12px", fontWeight: "600", width: "32px", textAlign: "right" }}>
+                    <span className={`${t.kpiBlue} text-[13px] font-semibold w-[36px] text-right`}>
                       {pct > 0 ? `${pct}%` : "—"}
                     </span>
                   </div>

@@ -1,46 +1,73 @@
-// Badge risque IA – Theme-aware
+import { useTheme } from "../../hooks/useTheme"
+
+// Badge risque IA – Theme-aware avec tokens t
 export default function RiskBadge({ niveau }) {
+  const { t, isLight } = useTheme()
+
   const styles = {
-FAIBLE: {
+    FAIBLE: {
       label: "FAIBLE",
       indicator: "Faible",
-      bgGradient: "bg-accent-main/10",
-      borderColor: "border-accent-main/30",
-      textColor: "text-accent-main",
-      glow: "shadow-accent-main/20",
+      light: {
+        bg: "bg-emerald-100/80", 
+        border: "border-emerald-200", 
+        text: t.success,
+        dot: "bg-emerald-500"
+      },
+      dark: {
+        bg: "bg-emerald-900/50", 
+        border: "border-emerald-800/50", 
+        text: t.success,
+        dot: "bg-emerald-400"
+      }
     },
     MOYEN: {
       label: "MOYEN",
       indicator: "Moyen",
-      bgGradient: "bg-warning/10",
-      borderColor: "border-warning/30",
-      textColor: "text-warning",
-      glow: "shadow-warning/20",
+      light: {
+        bg: "bg-orange-100/80", 
+        border: "border-orange-200", 
+        text: t.warning,
+        dot: "bg-orange-500"
+      },
+      dark: {
+        bg: "bg-orange-900/50", 
+        border: "border-orange-800/50", 
+        text: t.warning,
+        dot: "bg-orange-400"
+      }
     },
     ELEVE: {
       label: "ÉLEVÉ",
       indicator: "Élevé",
-      bgGradient: "bg-error/10",
-      borderColor: "border-error/30",
-      textColor: "text-error",
-      glow: "shadow-error/20",
-    },
+      light: {
+        bg: "bg-red-100/80", 
+        border: "border-red-200", 
+        text: t.danger,
+        dot: "bg-red-500"
+      },
+      dark: {
+        bg: "bg-red-900/50", 
+        border: "border-red-800/50", 
+        text: t.danger,
+        dot: "bg-red-400"
+      }
+    }
   }
 
   const s = styles[niveau] || styles.MOYEN
-  const className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide border ${s.bgGradient} ${s.borderColor} ${s.textColor}`
-
-  const dotColor = niveau === 'FAIBLE' ? 'accent-main' : niveau === 'MOYEN' ? 'warning' : 'error'
+  const themeStyles = isLight ? s.light : s.dark
   
+  const className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide border font-semibold shadow-sm ${themeStyles.bg} ${themeStyles.border} ${themeStyles.text}`
+
   return (
     <span className={className}>
-      <span className="relative">
-        <span className={`absolute inset-0 rounded-full animate-ping opacity-75 bg-${dotColor}`} />
-<span className="relative text-xs uppercase tracking-[0.25em] font-semibold">{s.indicator}</span>
+      <span className="relative flex items-center gap-1">
+        <span className={`w-1.5 h-1.5 rounded-full ${themeStyles.dot} animate-ping absolute opacity-75`} />
+        <span className="relative text-xs uppercase tracking-[0.2em] font-bold">{s.indicator}</span>
       </span>
-      <span>{s.label}</span>
-      
-      <span className={`ml-1 w-1.5 h-1.5 rounded-full bg-${dotColor}`} />
+      <span className="tracking-wide">{s.label}</span>
+      <span className={`ml-1 w-2 h-2 rounded-full ${themeStyles.dot}`} />
     </span>
   )
 }

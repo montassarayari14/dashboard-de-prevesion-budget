@@ -1,24 +1,24 @@
-// Métriques budget IA – Theme-aware
+// Métriques budget IA – Design amélioré bijoux / Stat cards optimisées
+
 import { useEffect, useState } from "react"
+import { useTheme } from "../../hooks/useTheme"
 
 export default function BudgetAnalysisMetrics({ analyse }) {
+  const { isDark } = useTheme()
   const [animated, setAnimated] = useState(false)
   
   useEffect(() => {
     setAnimated(true)
-  }, [])
+  }, [analyse])
 
   if (!analyse) return null
 
+  const budgetDemande = analyse.totalDemande || 0
   const budgetAlloue = analyse.budgetAlloue || 0
-  const budgetDemande = analyse.budgetDemande || 0
-  
-  const tauxConsommation = budgetAlloue > 0 
-    ? Math.round((budgetDemande / budgetAlloue) * 100) 
-    : 0
+  const tauxConsommation = budgetAlloue > 0 ? Math.round((budgetDemande / budgetAlloue) * 100) : 0
   const margeDisponible = budgetAlloue - budgetDemande
-  const budgetN1 = analyse.budgetN1 || null
-  const totalDemandeN1 = analyse.totalDemandeN1 || null
+  const budgetN1 = analyse.budgetN1 || 0
+  const totalDemandeN1 = analyse.totalDemandeN1 || 0
 
   const tauxBar = Math.min(100, Math.max(0, tauxConsommation))
   const margeBar = budgetAlloue > 0 ? Math.min(100, Math.max(0, (margeDisponible / budgetAlloue) * 100)) : 50

@@ -1,9 +1,13 @@
-# Fix ReferenceError: textSub is not defined in DGParametres.jsx - COMPLETED ✓
+# Fix ThemeProvider Hook Error
 
-## Steps Completed:
-- [x] 1. Added missing theme constants (textSub, textBtn, cardBg, cardBorder, textError, textSuccess) after isLight declaration
-- [x] 2. Fixed password section div className to use `${cardBg} border ${cardBorder} rounded-2xl p-6`
-- [x] 3. Updated TODO.md to mark complete
+## Steps:
+- [x] 1. Analyzed files and identified duplicate ThemeProvider conflict
+- [x] 2. Update ThemeContext.jsx (merge logic + Context + data-theme)
+- [x] 3. Update main.jsx (import from ThemeContext)
+- [x] 4. Update useTheme.js hook to use Context
+- [x] 5. Replace window.toggleTheme usages in DGParametres.jsx and DirecteurParametres.jsx (destructured toggleTheme)
+- [x] 6. Delete Themeprovider.jsx
+- [x] 7. Test: cd frontend && npm run dev, check console + theme toggle
+- [x] Fixed remaining hook issues in BudgetAnalysisMetrics and AI cards
+- [x] Fixed text wrapping in analysis sections with theme-aware classes
 
-## Next:
-- [ ] 4. Test: cd frontend && npm run dev, navigate to DG Paramètres page, check browser console for errors

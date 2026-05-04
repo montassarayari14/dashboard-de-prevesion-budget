@@ -1,21 +1,10 @@
-import { useState, useEffect } from "react"
+import { useContext } from "react"
+import { useTheme as useContextTheme } from "../ThemeContext"
 
 export function useTheme() {
-  const [isLight, setIsLight] = useState(
-    () => localStorage.getItem("theme") === "light"
-  )
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsLight(localStorage.getItem("theme") === "light")
-    })
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme"],
-    })
-    return () => observer.disconnect()
-  }, [])
-
+  const { theme } = useContextTheme()
+  const isLight = theme === "light"
+  
   const t = {
     // ── Fonds ──────────────────────────────────────────────
     pageBg:    isLight ? "bg-[#F3F4F6]"       : "bg-[#0F172A]",
@@ -141,5 +130,5 @@ export function useTheme() {
     overlay: "bg-black/60",
   }
 
-  return { isLight, t }
+  return { isLight, t, toggleTheme: useContextTheme().toggleTheme }
 }

@@ -11,7 +11,7 @@ const tabs = [
 
 
 export default function DirecteurParametres() {
-  const { isLight, t } = useTheme()
+  const { isLight, t, toggleTheme } = useTheme()
   const user = JSON.parse(localStorage.getItem("user") || "{}")
 
   const [email, setEmail]         = useState(user.email || "")
@@ -26,7 +26,7 @@ export default function DirecteurParametres() {
   const initiales = (user.prenom?.[0] || "") + (user.nom?.[0] || "")
 
   function handleToggleTheme() {
-    window.toggleTheme?.()
+    toggleTheme()
   }
 
   async function saveProfil() {

@@ -25,6 +25,8 @@ import DGDemandes     from "./Pages/dg/DGDemandes"
 import DGDetail       from "./Pages/dg/DGDetail"
 import DGStatistiques from "./Pages/dg/DGStatistiques"
 import DGHistorique   from "./Pages/dg/DGHistorique"
+import DGParametres   from "./Pages/dg/DGParametres.jsx"
+import AIAssistant    from "./component/dg/AIAssistant.jsx"
 
 export default function App() {
   return (
@@ -58,6 +60,9 @@ export default function App() {
       <Route path="/dg/rejetees"     element={<PrivateRoute><DGDemandes /></PrivateRoute>} />
       <Route path="/dg/statistiques" element={<PrivateRoute><DGStatistiques /></PrivateRoute>} />
       <Route path="/dg/historique"   element={<PrivateRoute><DGHistorique /></PrivateRoute>} />
+      <Route path="/dg/parametres"   element={<PrivateRoute><DGParametres /></PrivateRoute>} />
+      <Route path="/dg/ai-assistant" element={<PrivateRoute><AIAssistant /></PrivateRoute>} />
+      <Route path="/dg/ai"           element={<PrivateRoute><AIAssistant /></PrivateRoute>} />
 
       {/* URL inconnue → login */}
       <Route path="*" element={<Navigate to="/login" />} />

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import Dgsidebar from "../../component/dg/Dgsidebar"
+import { useTheme } from "../../hooks/useTheme"
 import Statutbadge from "../../component/dg/Statutbadge"
 import Ecartpill from "../../component/dg/Ecartpill"
 import API from "../../api/axios"
@@ -8,6 +9,7 @@ export default function DGHistorique() {
   const [historique, setHistorique] = useState([])
   const [anneeFiltre, setAnneeFiltre] = useState("toutes")
   const [dirFiltre, setDirFiltre] = useState("toutes")
+  const { t } = useTheme()
 
   useEffect(() => {
     API.get("/directions/historique").then((res) => setHistorique(res.data))
@@ -25,86 +27,107 @@ export default function DGHistorique() {
   })
 
   return (
-    <div className="min-h-screen bg-bg-global text-text-primary flex overflow-hidden">
+    <div className={`min-h-screen ${t.pageBg} flex`}>
       <Dgsidebar />
 
-      <div className="flex-1 p-6 overflow-y-auto">
+      <div className="flex-1 p-8 overflow-y-auto">
         {/* En-tête */}
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-1">Historique des campagnes</h1>
-            <p className="text-text-secondary">Toutes les années · Toutes les directions</p>
-          </div>
-
-          {/* Filtres */}
-          <div className="flex gap-2.5">
-            <select
-              value={anneeFiltre}
-              onChange={(e) => setAnneeFiltre(e.target.value)}
-              className="bg-bg-border border border-bg-border/50 rounded-xl px-3 py-2 text-sm text-text-secondary outline-none focus:border-accent-main"
-            >
-              {annees.map((a) => (
-                <option key={a} value={a}>
-                  {a === "toutes" ? "Toutes les années" : a}
-                </option>
-              ))}
-            </select>
-            <select
-              value={dirFiltre}
-              onChange={(e) => setDirFiltre(e.target.value)}
-              className="bg-bg-border border border-bg-border/50 rounded-xl px-3 py-2 text-sm text-text-secondary outline-none focus:border-accent-main"
-            >
-              {directions.map((d) => (
-                <option key={d} value={d}>
-                  {d === "toutes" ? "Toutes les directions" : d}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="mb-8">
+          <h1 className={`text-[26px] font-bold mb-2 ${t.textMain}`}>Historique des campagnes</h1>
+          <p className={`${t.textSub} text-[14px]`}>Décisions DG par année et direction</p>
         </div>
 
-        {/* Tableau historique */}
-        <div className="bg-bg-card border border-bg-border rounded-2xl overflow-hidden">
+        {/* Filtres */}
+        <div className="flex gap-3 mb-6">
+          <select
+            value={anneeFiltre}
+            onChange={(e) => setAnneeFiltre(e.target.value)}
+            className={`
+              flex-1 max-w-md ${t.input} px-4 py-3 rounded-xl text-[14px]
+              hover:${t.inputHover} focus:${t.inputFocus}
+            `}
+          >
+            {annees.map((a) => (
+              <option key={a} value={a}>
+                {a === "toutes" ? "Toutes les années" : `Année ${a}`}
+              </option>
+            ))}
+          </select>
+          <select
+            value={dirFiltre}
+            onChange={(e) => setDirFiltre(e.target.value)}
+            className={`
+              flex-1 max-w-md ${t.input} px-4 py-3 rounded-xl text-[14px]
+              hover:${t.inputHover} focus:${t.inputFocus}
+            `}
+          >
+            {directions.map((d) => (
+              <option key={d} value={d}>
+                {d === "toutes" ? "Toutes les directions" : d}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Table - Audit style */}
+        <div className={`${t.cardBg} ${t.border} rounded-2xl overflow-hidden shadow-lg`}>
           <table className="w-full">
             <thead>
-              <tr className="border-b border-bg-border">
-                {["Campagne", "Direction", "Directeur", "Demandé", "Alloué", "Écart", "Statut", "Décision le", "Commentaire"].map((th) => (
-                  <th key={th} className="px-4 py-3 text-left text-xs font-semibold uppercase text-text-tertiary">
+              <tr className={`${t.thead} ${t.borderBottom}`}>
+                {["Campagne", "Direction", "Directeur", "Demandé", "Alloué", "Écart", "Statut", "Décision", "Commentaire"].map((th) => (
+                  <th key={th} className={`px-6 py-4 text-left ${t.textSub} font-semibold uppercase tracking-wider text-xs`}>
                     {th}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-bg-border">
+
+            <tbody className={`${t.tbody}`}>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="px-4 py-10 text-center text-sm text-text-tertiary">
-                    Aucun historique disponible
+                  <td colSpan="9" className={`px-6 py-16 text-center ${t.textMute} text-[15px] font-medium`}>
+                    <div className="flex flex-col items-center gap-3">
+                      <span className={`text-5xl mb-3 ${t.textSub}`}>📜</span>
+                      Aucun historique trouvé
+                    </div>
+                    <p className={`${t.textMute} text-[13px] mt-1`}>Essayez différents filtres</p>
                   </td>
                 </tr>
               ) : (
                 filtered.map((h, i) => (
-                  <tr key={i}>
-                    <td className="px-4 py-3 text-text-primary font-bold font-mono text-sm">{h.annee}</td>
-                    <td className="px-4 py-3">
-                      <span className="bg-accent-main/10 text-accent-main px-2.5 py-1 rounded-md text-xs font-semibold">
+                  <tr key={i} className={`${t.rowHover} ${t.borderBottom}`}>
+                    <td className={`px-6 py-5 font-bold font-mono text-[15px] ${t.kpiBlue}`}>
+                      {h.annee}
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white text-sm font-bold shadow-lg">
                         {h.code}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-text-secondary text-sm">{h.directeur}</td>
-                    <td className="px-4 py-3 text-warning font-mono text-xs">{h.totalDemande?.toLocaleString("fr-FR")} DT</td>
-                    <td className="px-4 py-3 text-text-secondary font-mono text-xs">{h.budget?.toLocaleString("fr-FR")} DT</td>
-                    <td className="px-4 py-3">
+                    <td className={`px-6 py-5 ${t.textSub} text-[13px]`}>
+                      {h.directeur}
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className={`${t.warning} font-mono text-[14px] font-semibold`}>
+                        {h.totalDemande?.toLocaleString("fr-FR") || 0} DT
+                      </span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className={`${t.kpiGreen} font-mono text-[14px] font-semibold`}>
+                        {h.budget?.toLocaleString("fr-FR") || 0} DT
+                      </span>
+                    </td>
+                    <td className="px-6 py-5">
                       <Ecartpill demande={h.totalDemande} alloue={h.budget} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-5">
                       <Statutbadge statut={h.statut} />
                     </td>
-                    <td className="px-4 py-3 text-text-tertiary font-mono text-xs">
+                    <td className={`px-6 py-5 ${t.textSub} font-mono text-[13px]`}>
                       {h.decisionLe ? new Date(h.decisionLe).toLocaleDateString("fr-FR") : "—"}
                     </td>
-                    <td className="px-4 py-3 text-text-secondary text-xs max-w-48 truncate">
-                      {h.commentaireDG || "—"}
+                    <td className={`px-6 py-5 text-[13px] max-w-xs ${t.textSub}`}>
+                      {h.commentaireDG || "Pas de commentaire"}
                     </td>
                   </tr>
                 ))

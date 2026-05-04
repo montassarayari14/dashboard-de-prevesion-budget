@@ -1,32 +1,22 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react"
 
 const ThemeContext = createContext({
-  theme: "light",
+  theme: "dark",
   toggleTheme: () => {},
 })
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState("light") // Default LIGHT
+  const [theme, setTheme] = useState("dark")
 
   useEffect(() => {
-    // Load from localStorage on mount, default light
-    const saved = localStorage.getItem("theme")
-    if (saved === "dark") {
-      setTheme("dark")
-    } else {
-      setTheme("light")
-      localStorage.setItem("theme", "light")
-    }
+    // Load saved theme on mount, default dark
+    const saved = localStorage.getItem("theme") || "dark"
+    setTheme(saved)
   }, [])
 
   useEffect(() => {
-    if (typeof document !== "undefined") {
-      if (theme === "light") {
-        document.documentElement.classList.remove("dark")
-      } else {
-        document.documentElement.classList.add("dark")
-      }
-    }
+    // Apply to document
+    document.documentElement.setAttribute("data-theme", theme)
     localStorage.setItem("theme", theme)
   }, [theme])
 

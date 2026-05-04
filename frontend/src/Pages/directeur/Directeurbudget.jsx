@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import DirecteurSidebar from "../../component/directeur/DirecteurSidebar"
 import StatutBadge from "../../component/directeur/StatutBadge"
 import EcartPill from "../../component/directeur/EcartPill"
-import ModalePoste from "../../component/directeur/ModalePoste"
+import Modaleposte from "../../component/directeur/Modaleposte"
 import { useTheme } from "../../hooks/useTheme"
 import API from "../../api/axios"
 
@@ -35,7 +35,9 @@ export default function DirecteurBudget() {
     try {
       const res = await API.put(`/directions/${direction._id}/postes`, { postes })
       setDirection(res.data)
-    } catch { alert("Erreur lors de la sauvegarde") }
+    } catch { 
+      alert("Erreur lors de la sauvegarde") 
+    }
     setSaving(false)
   }
 
@@ -60,7 +62,9 @@ export default function DirecteurBudget() {
     try {
       const res = await API.put(`/directions/${direction._id}/soumettre`, { postes: direction.postes })
       setDirection(res.data)
-    } catch { alert("Erreur lors de la soumission") }
+    } catch { 
+      alert("Erreur lors de la soumission") 
+    }
   }
 
   const canEdit = direction?.statut === "brouillon" || direction?.statut === "rejete"
@@ -85,7 +89,7 @@ export default function DirecteurBudget() {
           <div>
             <h1 className={`text-[28px] font-bold mb-1 ${t.textMain}`}>Mon budget</h1>
             <div className="flex items-center gap-[10px]">
-              <p className={`${t.textSub} text-[13px]`}>Saisie des postes · Campagne 2025</p>
+              <p className={`${t.textSub} text-[13px]`}>Saisie des postes IA · Campagne 2025</p>
               <StatutBadge statut={direction?.statut || "brouillon"} />
             </div>
           </div>
@@ -94,87 +98,94 @@ export default function DirecteurBudget() {
             <div className="flex gap-[10px]">
               <button
                 onClick={() => { setPosteEdit(null); setShowModal(true) }}
-                className={`px-[18px] py-[9px] border rounded-[10px] text-[13px] font-semibold cursor-pointer ${t.btnOutline}`}
+                className={`px-[18px] py-[9px] border rounded-[10px] text-[13px] font-semibold cursor-pointer ${t.btnPrimary}`}
               >
-                + Ajouter un poste
++ Nouveau poste IA
               </button>
               <button
                 onClick={handleSoumettre}
                 disabled={!direction?.postes?.length}
-                className={`px-[18px] py-[9px] border rounded-[10px] text-[13px] font-semibold cursor-pointer disabled:opacity-50 ${t.btnPrimary}`}
+                className={`px-[18px] py-[9px] border rounded-[10px] text-[13px] font-semibold cursor-pointer disabled:opacity-50 ${t.btnOutline}`}
               >
-                Soumettre à la DG
+                Soumettre DG
               </button>
             </div>
           )}
         </div>
 
-        {/* Message si rejeté */}
+        {/* Rejet DG */}
         {direction?.statut === "rejete" && direction?.commentaireDG && (
-          <div className={`${t.dangerBg} border ${t.dangerBdr} rounded-xl px-4 py-[14px] mb-5`}>
-            <p className={`${t.danger} text-[13px] font-semibold mb-1`}>Demande rejetée par la Direction Générale</p>
-            <p className={`${t.danger} text-xs opacity-80`}>{direction.commentaireDG}</p>
+          <div className={`${t.dangerBg} border ${t.dangerBdr} rounded-xl px-4 py-3 mb-5`}>
+            <p className={`${t.danger} font-semibold mb-1`}>Rejet DG</p>
+            <p className={`${t.danger} text-xs`}>{direction.commentaireDG}</p>
           </div>
         )}
 
-        {/* Tableau */}
-        <div className={`${t.cardBg} border ${t.border} rounded-[14px] overflow-hidden`}>
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className={`border-b ${t.border} ${t.thead}`}>
-                {["Poste", "Catégorie", "Montant 2025", "Montant 2024", "Écart", "Justification", canEdit && "Actions"]
-                  .filter(Boolean)
-                  .map((th) => (
-                    <th key={th} className="px-4 py-3 text-left text-[11px] uppercase tracking-[0.5px]">
-                      {th}
-                    </th>
-                  ))}
+        {/* Tableau postes */}
+        <div className={`${t.cardBg} border ${t.border} rounded-2xl overflow-hidden shadow-lg`}>
+          <table className="w-full">
+            <thead className={`${t.thead} border-b ${t.border}`}>
+              <tr>
+                {["Poste", "Catégorie", "2025", "2024", "Écart", "IA", canEdit && "Actions"].filter(Boolean).map(th => (
+                  <th key={th} className="px-4 py-4 text-left text-xs uppercase tracking-wider font-semibold">
+                    {th}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {!direction?.postes?.length ? (
                 <tr>
-                  <td colSpan="7" className={`p-10 text-center ${t.textSub}`}>
-                    Aucun poste ajouté. Cliquez sur "Ajouter un poste" pour commencer.
+                  <td colSpan="7" className={`p-12 text-center ${t.textSub}`}>
+Aucun poste. Cliquez "+ Nouveau poste IA" pour commencer
                   </td>
                 </tr>
               ) : (
                 direction.postes.map((p, i) => {
                   const catKey = catTagClass[p.categorie] || "catAutre"
+                  const aiStatus = p.aiValidation?.validation || '—'
                   return (
-                    <tr key={i} className={`border-b ${t.tbodyBorder} ${t.rowHover}`}>
-                      <td className={`px-4 py-3 font-medium text-[13px] ${t.textMain}`}>{p.nom}</td>
-                      <td className="px-4 py-3">
-                        <span className={`${t[catKey]} px-[10px] py-[3px] rounded-md text-[11px] font-semibold`}>
+                    <tr key={i} className={`${t.rowHover} hover:bg-opacity-50 border-b ${t.tbodyBorder}`}>
+                      <td className="px-4 py-4">
+                        <div className="font-medium text-sm">{p.nom}</div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${t[catKey]}`}>
                           {p.categorie}
                         </span>
                       </td>
-                      <td className={`px-4 py-3 font-mono text-[13px] ${t.textMain}`}>
-                        {(p.montant || 0).toLocaleString("fr-FR")} DT
+                      <td className="px-4 py-4 font-mono font-semibold text-sm">
+                        {p.montant?.toLocaleString("fr-FR")} DT
                       </td>
-                      <td className={`px-4 py-3 font-mono text-[13px] ${t.textSub}`}>
-                        {p.montantN1 ? `${p.montantN1.toLocaleString("fr-FR")} DT` : "—"}
+                      <td className="px-4 py-4 font-mono text-sm opacity-75">
+                        {p.montantN1 ? p.montantN1.toLocaleString("fr-FR") : '—'} DT
                       </td>
-                      <td className="px-4 py-3">
-                        <EcartPill montant={p.montant} montantN1={p.montantN1} />
+                      <td className="px-4 py-4">
+                        <EcartPill small montant={p.montant} montantN1={p.montantN1} />
                       </td>
-                      <td className={`px-4 py-3 text-xs ${t.textSub}`}>
-                        {p.justification || "—"}
+                      <td className="px-4 py-4 text-xs">
+{aiStatus === 'Cohérent' && 'OK'}
+                        {aiStatus === 'À vérifier' && '⚠️'}
+                        {aiStatus === 'Incohérent' && '❌'}
+                        {aiStatus === '—' ? 'Non analysé' : aiStatus}
                       </td>
                       {canEdit && (
-                        <td className="px-4 py-3">
-                          <div className="flex gap-[6px]">
+                        <td className="px-4 py-4">
+                          <div className="flex gap-2">
                             <button
-                              onClick={() => { setPosteEdit({ ...p, _index: i }); setShowModal(true) }}
-                              className={`px-[10px] py-1 border rounded-md text-[11px] cursor-pointer ${t.btnOutline}`}
+                              className={`px-3 py-1 text-xs rounded-lg font-medium ${t.btnOutline}`}
+                              onClick={() => {
+                                setPosteEdit({ ...p, _index: i })
+                                setShowModal(true)
+                              }}
                             >
-                              Modifier
+                              Éditer
                             </button>
                             <button
+                              className={`px-2 py-1 text-xs rounded-lg ${t.btnDanger}`}
                               onClick={() => handleDelete(i)}
-                              className={`px-[10px] py-1 border rounded-md text-[11px] cursor-pointer ${t.btnDanger}`}
                             >
-                              ✕
+                              ×
                             </button>
                           </div>
                         </td>
@@ -186,29 +197,33 @@ export default function DirecteurBudget() {
             </tbody>
           </table>
 
-          {/* Total */}
-          <div className={`border-t ${t.border} px-4 py-[14px] flex justify-between items-center`}>
-            <span className={`${t.textSub} text-[13px]`}>
-              {saving ? "Enregistrement..." : `${direction?.postes?.length || 0} postes`}
-            </span>
-            <span className={`text-[13px] ${t.textSub}`}>
-              Total :{" "}
-              <span className={`${t.kpiAmber} font-bold font-mono`}>
-                {totalEstime.toLocaleString("fr-FR")} DT
+          {/* Total ligne */}
+          <div className="border-t ${t.border} px-6 py-4 bg-gradient-to-r from-blue-50/50">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium opacity-75">
+                {direction.postes?.length || 0} postes {saving && '(sauvegarde...)'}
               </span>
-              {" / "}
-              <span className={`${t.textMute} font-mono`}>
-                {(direction?.budget || 0).toLocaleString("fr-FR")} DT alloués
-              </span>
-            </span>
+              <div className="text-right">
+                <div className="text-2xl font-bold">
+                  {totalEstime.toLocaleString('fr-FR')} DT
+                </div>
+                <div className="text-sm opacity-75">
+                  / {direction.budget?.toLocaleString('fr-FR')} DT alloués
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {showModal && (
-        <ModalePoste
+        <Modaleposte
           poste={posteEdit}
-          onClose={() => { setShowModal(false); setPosteEdit(null) }}
+          directionCode={direction?.code}
+          onClose={() => {
+            setShowModal(false)
+            setPosteEdit(null)
+          }}
           onSave={handleSavePoste}
         />
       )}

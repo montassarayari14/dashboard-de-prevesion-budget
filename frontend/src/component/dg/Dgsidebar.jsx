@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
+import { useTheme } from "../../hooks/useTheme"
 
-// Liste des liens de navigation
 const navLinks = [
   { path: "/dg/dashboard",    label: "Tableau de bord"   },
   { path: "/dg/demandes",     label: "Toutes les demandes" },
@@ -10,14 +10,13 @@ const navLinks = [
   { path: "/dg/statistiques", label: "Statistiques"      },
   { path: "/dg/historique",   label: "Historique"        },
   { path: "/dg/parametres",   label: "Paramètres"        },
-  { path: "/dg/ai-assistant", label: "Assistant IA"    },
+  { path: "/dg/ai-assistant", label: "Assistant IA"      },
 ]
 
 export default function DGSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
-
-  // Récupère les infos de l'utilisateur connecté
+  const { isLight, t } = useTheme()
   const user = JSON.parse(localStorage.getItem("user") || "{}")
 
   function logout() {
@@ -26,31 +25,30 @@ export default function DGSidebar() {
     navigate("/login")
   }
 
-// Sidebar theme-aware (DG)
   return (
-    <div className="w-52 min-h-screen bg-sidebar-dg border-r border-bg-border/50 flex flex-col justify-between flex-shrink-0">
-
-      
-      {/* Titre en haut */}
+    <div className={`w-[210px] min-h-screen ${t.sidebarBg} border-r ${t.sidebarDivide} flex flex-col justify-between`}>
       <div>
-        <div className="p-5 border-b border-blue-500/50">
-          <p className="text-white font-bold text-sm">Direction Générale</p>
-          <p className="text-blue-100 text-xs mt-0.5">Campagne 2025</p>
+        {/* En-tête */}
+        <div className={`px-4 py-5 border-b ${t.sidebarDivide}`}>
+          <p className={`${t.sidebarText} font-bold text-[13px] leading-snug mb-[2px]`}>
+            Direction Générale
+          </p>
+          <p className={`${t.sidebarTextMute} text-[11px]`}>Campagne 2025</p>
         </div>
 
         {/* Navigation */}
-        <nav className="p-2 mt-1">
+        <nav className="p-2">
           {navLinks.map((link) => {
             const isActive = location.pathname === link.path
             return (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm mb-0.5 transition-colors no-underline
-                  ${isActive
-                    ? "bg-blue-600 text-white border-l-2 border-amber-500"
-                    : "text-blue-100 hover:text-white hover:bg-blue-700/80 border-l-2 border-transparent"
-                  }`}
+                className={`
+                  block px-3 py-[9px] mb-[2px] rounded-lg text-[13px] no-underline
+                  border-l-2 transition-colors
+                  ${isActive ? t.sidebarLinkActive : t.sidebarLinkIdle}
+                `}
               >
                 {link.label}
               </Link>
@@ -60,17 +58,25 @@ export default function DGSidebar() {
       </div>
 
       {/* Profil + déconnexion */}
-      <div className="p-4 border-t border-blue-500/50">
-        <p className="text-white text-sm font-semibold truncate">
-          {user.prenom} {user.nom}
-        </p>
-        <p className="text-blue-100 text-xs mb-2">Directeur Général</p>
-        
-        <button onClick={logout} className="text-red-200 text-xs hover:text-white bg-transparent border-none cursor-pointer p-0">
+      <div className={`px-4 py-3 border-t ${t.sidebarDivide}`}>
+        <Link to="/dg/parametres" className="no-underline group">
+          <p className={`${t.sidebarText} text-[13px] font-semibold mb-[2px] transition-colors group-hover:text-white`}>
+            {user.prenom} {user.nom}
+          </p>
+          <p className={`${t.sidebarTextMute} text-[11px] mb-2`}>
+            Directeur Général
+          </p>
+        </Link>
+        <button
+          onClick={logout}
+          className={`
+            text-xs bg-transparent border-none cursor-pointer p-0 transition-colors
+            ${t.danger} hover:text-red-400
+          `}
+        >
           Déconnexion
         </button>
       </div>
-
     </div>
   )
 }

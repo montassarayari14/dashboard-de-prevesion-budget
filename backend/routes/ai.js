@@ -359,6 +359,89 @@ router.post('/analyze/:directionId', verifyToken, adminOrDG, async (req, res) =>
 // ┛┗ ┛┗ ┛┗
 // ─────────────────────────────────────────────────────────
 
+// Import catégories
+const CATEGORIES_PAR_DIRECTION = require('./CATEGORIES_PAR_DIRECTION');
+
+// → POST /api/ai/validate-demande  (NOUVEAU - pour formulaires)
+router.post('/validate-demande', verifyToken, async (req, res) => {
+  try {
+    const { direction, categorie, sousCategorie, montant, description } = req.body;
+
+    if (!direction || !categorie) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Direction et catégorie obligatoires' 
+      });
+    }
+
+    const dirCode = direction.toUpperCase();
+    const catCode = categorie.toUpperCase().split(' → ')[0]; // Ex: "AI001 → ..." → "AI001"
+    const desc = (description || '').toLowerCase();
+    const mt = parseFloat(montant) || 0;
+
+    // 1. Vérifier existence catégorie dans direction
+    const categoriesDir = CATEGORIES_PAR_DIRECTION[dirCode] || [];
+    const catValide = categoriesDir.some(cat => cat.code === catCode);
+
+    let validation = 'Incohérent';
+    let correspondanceMetier = '❌ Incohérent';
+    let pertinence = '';
+    let type = 'inconnu';
+    let suggestion = '';
+    let alerte = '';
+
+    if (catValide) {
+      const catInfo = categoriesDir.find(cat => cat.code === catCode);
+      type = catInfo.type;
+      validation = 'Cohérent';
+      correspondanceMetier = `✅ Très cohérent avec ${dirCode}`;
+      pertinence = `${type.charAt(0).toUpperCase() + type.slice(1)}`;
+
+      // Feedback intelligent sur description
+      if (desc.includes('medical') || desc.includes('pharmacie')) {
+        correspondanceMetier += ' (dépense médicale logique pour RH)';
+      } else if (desc.includes('logiciel') || desc.includes('it')) {
+        correspondanceMetier += ' (logique pour DI)';
+      }
+
+      suggestion = 'Description claire. Prête pour soumission.';
+    } else {
+      // Suggestions alternatives
+      const suggestionsCats = categoriesDir.slice(0, 3).map(cat => cat.code);
+      suggestion = `Proposer une meilleure catégorie: ${suggestionsCats.join(', ')}`;
+      alerte = '⚠️ Mauvaise catégorie - risque de rejet';
+    }
+
+    // Check montant cohérence (ex: pas trop gros sans projet)
+    if (mt > 50000 && !catCode.includes('500') && !catCode.includes('501')) {
+      validation = 'À vérifier';
+      alerte = '💰 Montant élevé pour fonctionnement - justifier';
+    }
+
+    // Format réponse EXACT task
+    const response = {
+      validation,
+      'Catégorie': {
+        Type: type,
+        Code: catCode
+      },
+      'Analyse rapide': {
+        'Correspondance métier': correspondanceMetier,
+        Pertinence: pertinence
+      },
+      Suggestion: suggestion,
+      Alerte: alerte || null
+    };
+
+    res.json({
+      success: true,
+      data: response
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // → POST /api/ai/chat
 router.post('/chat', verifyToken, adminOrDG, async (req, res) => {
   try {
