@@ -258,8 +258,10 @@ export default function AIAssistantPanel({ direction }) {
     setError("")
     try {
       const res = await API.post(`/ai/analyze/${direction._id}`)
+      const analyseResult = res.data.data.analyseResult || {}
       setAnalyse({
-        ...res.data.data.analyseResult,
+        ...analyseResult,
+        totalDemande: analyseResult.totalDemande ?? analyseResult.budgetDemande ?? 0,
         postesAnalyse: res.data.data.postesAnalyse || [],
       })
     } catch (err) {

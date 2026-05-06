@@ -98,7 +98,7 @@ export default function DGDetail() {
             <div className="flex gap-6">
               <div>
                 <p className={`${t.textSub} text-xs mb-1`}>Directeur</p>
-                <p className={`${t.textMain} text-[15px]`}>{direction.directeur || "Non assigné"}</p>
+                <p className={`${t.textMain} text-[15px]`}>{direction.directeur|| "Non assigné" }</p>
               </div>
               <div>
                 <p className={`${t.textSub} text-xs mb-1`}>Soumis le</p>

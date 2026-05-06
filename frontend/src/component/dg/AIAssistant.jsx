@@ -550,7 +550,9 @@ const c = isDark ? {
                 <div
                   key={a._id}
                   className={`${c.rowBase} rounded-xl p-4 transition-all duration-150 cursor-pointer`}
-                  onClick={() => navigate(`/dg/demandes/${a.directionId || a._id}`)}
+                  onClick={() => {
+                    if (a.directionId) navigate(`/dg/demandes/${a.directionId}`)
+                  }}
                 >
                   {/* Row top: code + date + badges */}
                   <div className="flex items-start justify-between gap-2 mb-3">

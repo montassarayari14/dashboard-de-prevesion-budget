@@ -1,9 +1,72 @@
 const router     = require("express").Router()
+const mongoose   = require("mongoose")
 const Direction  = require("../models/Direction")
 const Historique = require("../models/Historique")
 const Log        = require("../models/Log")
 const User       = require("../models/User")
+const AIDecision = require("../models/AIDecision")
 const { verifyToken, adminOnly, dgOnly, adminOrDG } = require("../middleware/auth")
+
+const DEFAULT_DIRECTION_BUDGETS = {
+  DI: { budget: 120000, budgetN1: 100000 },
+}
+
+function fullName(user) {
+  return [user?.prenom, user?.nom].filter(Boolean).join(" ").trim()
+}
+
+function isMissingDirecteur(value) {
+  const normalized = String(value || "").trim().toLowerCase()
+  return !normalized || ["non signe", "non signé", "non assigne", "non assigné"].includes(normalized)
+}
+
+async function ensureDirecteur(direction, user = null) {
+  if (!direction || !isMissingDirecteur(direction.directeur)) return direction
+
+  const directeur = user || await User.findOne({
+    role: "Directeur",
+    direction: direction.code,
+    status: "actif"
+  })
+
+  const nomDirecteur = fullName(directeur)
+  if (!nomDirecteur) return direction
+
+  direction.directeur = nomDirecteur
+  await direction.save()
+  return direction
+}
+
+async function ensureDefaultBudget(direction) {
+  const defaultBudget = DEFAULT_DIRECTION_BUDGETS[direction?.code]
+  if (!direction || !defaultBudget || direction.budget > 0) return direction
+
+  direction.budget = defaultBudget.budget
+  direction.budgetN1 = direction.budgetN1 || defaultBudget.budgetN1
+  await direction.save()
+  return direction
+}
+
+async function findDirectionByIdOrAnalysisId(id) {
+  if (!mongoose.Types.ObjectId.isValid(id)) return null
+
+  let direction = await Direction.findById(id)
+  if (direction) return direction
+
+  const analyse = await AIDecision.findById(id).lean()
+  if (!analyse) return null
+
+  if (analyse.directionId) {
+    direction = await Direction.findById(analyse.directionId)
+    if (direction) return direction
+  }
+
+  if (analyse.directionCode) {
+    direction = await Direction.findOne({ code: analyse.directionCode })
+  }
+
+  return direction
+}
 
 // ─────────────────────────────────────────────
 // ROUTE DIRECTEUR — sa propre direction
@@ -19,6 +82,9 @@ router.get("/ma-direction", verifyToken, async (req, res) => {
     }
 
     let direction = await Direction.findOne({ code: user.direction })
+    const defaultBudget = DEFAULT_DIRECTION_BUDGETS[user.direction]
+
+    direction = await ensureDefaultBudget(direction)
     
     // Si la direction n'existe pas, on la crée automatiquement avec les valeurs par défaut
     if (!direction) {
@@ -36,8 +102,8 @@ router.get("/ma-direction", verifyToken, async (req, res) => {
         code: user.direction,
         nom: NOMS_DIRECTIONS[user.direction] || user.direction,
         directeur: `${user.prenom} ${user.nom}`,
-        budget: 0,
-        budgetN1: 0,
+        budget: defaultBudget?.budget || 0,
+        budgetN1: defaultBudget?.budgetN1 || 0,
         postes: [],
         totalDemande: 0,
         totalDemandeN1: 0,
@@ -52,6 +118,8 @@ router.get("/ma-direction", verifyToken, async (req, res) => {
         action: `Direction ${direction.code} créée automatiquement pour ${user.prenom} ${user.nom}`,
         user: req.user.id
       })
+    } else {
+      direction = await ensureDirecteur(direction, user)
     }
 
     res.json(direction)
@@ -111,9 +179,12 @@ router.put("/:id/soumettre", verifyToken, async (req, res) => {
     }
 
     const totalDemande = postes.reduce((sum, p) => sum + (p.montant || 0), 0)
+    const user = await User.findById(req.user.id)
+    const nomDirecteur = fullName(user)
 
     direction.postes       = postes
     direction.totalDemande = totalDemande
+    if (nomDirecteur) direction.directeur = nomDirecteur
     direction.statut       = "en_attente"
     direction.soumisLe     = new Date()
     await direction.save()
@@ -153,6 +224,10 @@ router.get("/historique", verifyToken, async (req, res) => {
 router.get("/", verifyToken, adminOrDG, async (req, res) => {
   try {
     const directions = await Direction.find().sort({ code: 1 })
+    await Promise.all(directions.map(async (direction) => {
+      await ensureDefaultBudget(direction)
+      await ensureDirecteur(direction)
+    }))
     res.json(directions)
   } catch (err) {
     res.status(500).json({ message: "Erreur serveur" })
@@ -164,8 +239,10 @@ router.get("/", verifyToken, adminOrDG, async (req, res) => {
 // ─────────────────────────────────────────────
 router.get("/:id", verifyToken, adminOrDG, async (req, res) => {
   try {
-    const direction = await Direction.findById(req.params.id)
+    let direction = await findDirectionByIdOrAnalysisId(req.params.id)
     if (!direction) return res.status(404).json({ message: "Direction introuvable" })
+    direction = await ensureDefaultBudget(direction)
+    direction = await ensureDirecteur(direction)
     res.json(direction)
   } catch (err) {
     res.status(500).json({ message: "Erreur serveur" })

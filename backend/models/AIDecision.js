@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const aiDecisionSchema = new mongoose.Schema({
+  directionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Direction', default: null },
   directionCode: String,
   directionNom: String,
   decision: String,

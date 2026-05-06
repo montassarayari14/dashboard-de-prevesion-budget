@@ -60,8 +60,29 @@ function inferTypeFromCode(code) {
   return 'fonctionnement'
 }
 
+function extractCategoryCode(categorie) {
+  const match = String(categorie || '').toUpperCase().match(/\b[A-Z]{2}\d{3}\b/)
+  return match ? match[0] : ''
+}
+
+function getCategoryOwner(categorie) {
+  const categoryCode = extractCategoryCode(categorie)
+  if (!categoryCode) return null
+
+  for (const [directionCode, categories] of Object.entries(CATEGORIES_PAR_DIRECTION)) {
+    if ((categories || []).some((category) => category.code === categoryCode)) {
+      return directionCode
+    }
+  }
+
+  return categoryCode.slice(0, 2)
+}
+
 function scoreDirectionFit(directionCode, categorie) {
   const code = String(directionCode || '').toUpperCase()
+  const owner = getCategoryOwner(categorie)
+  if (owner) return owner === code
+
   const category = normalizeText(categorie)
   const rules = [
     { dir: 'RH', pattern: /salair|social|medical|pharmacie|clinique|laboratoire/ },
@@ -110,6 +131,88 @@ function calculateBudgetPoints(budgetRestPct) {
   return 10
 }
 
+function calculateFinalScore(baseScore, points) {
+  const values = Object.values(points || {})
+  const positiveTotal = values
+    .filter((value) => value > 0)
+    .reduce((sum, value) => sum + value, 0)
+  const penaltyTotal = values
+    .filter((value) => value < 0)
+    .reduce((sum, value) => sum + value, 0)
+
+  const scoreBeforePenalties = Math.min(100, baseScore + positiveTotal)
+  return Math.round(Math.max(0, scoreBeforePenalties + penaltyTotal))
+}
+
+function formatMoney(value) {
+  return `${Math.round(value || 0).toLocaleString('fr-FR')} DT`
+}
+
+function formatSignedPoints(value) {
+  const rounded = Math.round(value || 0)
+  return `${rounded > 0 ? '+' : ''}${rounded} pts`
+}
+
+function describeScoreBand(score) {
+  if (score >= 85) return 'tres favorable'
+  if (score >= 70) return 'favorable'
+  if (score >= 55) return 'acceptable sous reserve'
+  if (score >= 40) return 'fragile'
+  return 'defavorable'
+}
+
+function buildAdvancedJustification({
+  direction,
+  demande,
+  budget,
+  budgetRestant,
+  budgetRestantPct,
+  taux,
+  score,
+  recommandation,
+  niveauRisque,
+  prioriteCategorie,
+  primaryCategory,
+  priorite,
+  criticite,
+  roi,
+  coherence,
+  points,
+}) {
+  const scoreDrivers = [
+    ['categorie', points.category],
+    ['priorite', points.priority],
+    ['criticite', points.criticite],
+    ['ROI', points.roi],
+    ['montant', points.montant],
+    ['budget restant', points.budget],
+    ['alignement direction', points.adaptation],
+  ].map(([label, value]) => `${label} ${formatSignedPoints(value)}`).join(', ')
+
+  const budgetSignal = budgetRestant < 0
+    ? `La demande depasse le budget de ${formatMoney(Math.abs(budgetRestant))}, ce qui impose un arbitrage ou une reduction de perimetre.`
+    : budgetRestantPct < 20
+      ? `La marge residuelle reste faible (${budgetRestantPct}% du budget), donc l'accord doit etre conditionne a un suivi strict des postes.`
+      : `La marge residuelle reste exploitable (${budgetRestantPct}% du budget), ce qui limite le risque de tension immediate.`
+
+  const coherenceSignal = coherence
+    ? `La categorie "${primaryCategory}" est coherente avec la mission de la direction ${direction.code || direction.nom || ''}.`
+    : `La categorie "${primaryCategory}" est peu alignee avec la mission de la direction ${direction.code || direction.nom || ''}; une validation metier complementaire est recommandee.`
+
+  const decisionSignal = recommandation === 'APPROUVER'
+    ? 'La recommandation est favorable car les gains metier et la cohérence budgétaire compensent les risques identifies.'
+    : recommandation === 'ANALYSER'
+      ? 'La recommandation reste prudente: la demande peut etre defendable, mais certains signaux doivent etre clarifies avant validation finale.'
+      : 'La recommandation est negative car le niveau de risque et/ou la pression budgetaire rendent la demande difficile a justifier en l etat.'
+
+  return [
+    `Score ${score}/100 (${describeScoreBand(score)}) avec risque ${niveauRisque}.`,
+    `Demande de ${formatMoney(demande)} sur un budget de ${formatMoney(budget)} (${taux}% consomme). ${budgetSignal}`,
+    `${coherenceSignal} Les criteres retenus sont: categorie ${prioriteCategorie}, priorite ${priorite}, criticite ${criticite}, ROI ${roi}.`,
+    `Contribution au score: ${scoreDrivers}. ${decisionSignal}`,
+  ].join(' ')
+}
+
 // → GET /api/ai/history?limit=50
 router.get('/history', verifyToken, adminOrDG, async (req, res) => {
   try {
@@ -124,9 +227,11 @@ router.get('/history', verifyToken, adminOrDG, async (req, res) => {
       const direction = await Direction.findOne({ code: a.directionCode }).lean();
       return {
         ...a,
+        directionId: direction?._id || a.directionId || null,
         budgetAlloue: direction?.budget || a.budgetAlloue,
         budgetDemande: direction?.totalDemande || a.budgetDemande,
         directionNom: direction?.nom || a.directionNom,
+        nomDirection: direction?.nom || a.directionNom,
       };
     }));
     
@@ -194,9 +299,17 @@ router.post('/analyze/:directionId', verifyToken, adminOrDG, async (req, res) =>
     const montantPoints = calculateMontantPoints(demande, budget);
     const budgetPoints = calculateBudgetPoints(budgetRestantPct);
     const adaptationPoints = getDirectionAdaptation(direction.code, primaryCategory);
+    const scoreBreakdown = {
+      category: categoryPoints,
+      priority: priorityPoints,
+      criticite: criticitePoints,
+      roi: roiPoints,
+      montant: montantPoints,
+      budget: budgetPoints,
+      adaptation: adaptationPoints,
+    };
 
-    let score = 50 + categoryPoints + priorityPoints + criticitePoints + roiPoints + montantPoints + budgetPoints + adaptationPoints;
-    score = Math.round(Math.max(0, Math.min(100, score)));
+    const score = calculateFinalScore(50, scoreBreakdown);
 
     const recommandation = score >= 70 ? 'APPROUVER' : score >= 40 ? 'ANALYSER' : 'REJETER';
     const decision = score >= 70 ? '✅ ACCEPTER' : score >= 40 ? '⚠️ À ANALYSER' : '❌ REJETER';
@@ -246,6 +359,19 @@ router.post('/analyze/:directionId', verifyToken, adminOrDG, async (req, res) =>
       });
     }
 
+    facteurs.push({
+      detail: `Contribution du montant demande: ${formatSignedPoints(montantPoints)} selon le taux de consommation (${taux}% du budget).`,
+      impact: montantPoints < 0 ? 'negatif' : montantPoints > 0 ? 'positif' : 'neutre',
+    });
+    facteurs.push({
+      detail: `Alignement metier direction/categorie: ${formatSignedPoints(adaptationPoints)} (${coherence ? 'coherent' : 'a verifier'}).`,
+      impact: adaptationPoints >= 0 ? 'positif' : 'negatif',
+    });
+    facteurs.push({
+      detail: `Lecture combinee criticite/ROI: ${formatSignedPoints(criticitePoints + roiPoints)} pour estimer urgence et valeur attendue.`,
+      impact: criticitePoints + roiPoints >= 16 ? 'positif' : 'neutre',
+    });
+
     const suggestions = [];
     if (recommandation === 'APPROUVER') {
       suggestions.push('Conserver la demande et suivre l’utilisation du budget.');
@@ -273,17 +399,45 @@ router.post('/analyze/:directionId', verifyToken, adminOrDG, async (req, res) =>
     if (direction.postes && direction.postes.length > 0) {
       for (const poste of direction.postes) {
         const posteTaux = budget > 0 ? (poste.montant / budget) * 100 : 0;
+        const montantSignificatif = posteTaux > 30;
+        const categorieCoherente = scoreDirectionFit(direction.code, poste.categorie);
+        const commentaires = [];
+
+        if (montantSignificatif) {
+          commentaires.push(`Part significative du budget (${Math.round(posteTaux)}%)`);
+        }
+        if (!categorieCoherente) {
+          commentaires.push(`Categorie peu alignee avec la direction ${direction.code}`);
+        }
+
         postesAnalyse.push({
           nom: poste.nom || 'Poste sans nom',
           categorie: poste.categorie || 'Autre',
           montant: poste.montant || 0,
-          anomalie: posteTaux > 30,
-          commentaire: posteTaux > 30 ? 'Part significative du budget' : null,
+          anomalie: commentaires.length > 0,
+          commentaire: commentaires.length > 0 ? commentaires.join(' ; ') : null,
         });
       }
     }
 
-    const justification = `${analyseMontant} ${analyseBudget}`;
+    const justification = buildAdvancedJustification({
+      direction,
+      demande,
+      budget,
+      budgetRestant,
+      budgetRestantPct,
+      taux,
+      score,
+      recommandation,
+      niveauRisque,
+      prioriteCategorie,
+      primaryCategory,
+      priorite,
+      criticite,
+      roi,
+      coherence,
+      points: scoreBreakdown,
+    });
     const risque = niveauRisque;
 
     const analyseResult = {
@@ -312,11 +466,14 @@ router.post('/analyze/:directionId', verifyToken, adminOrDG, async (req, res) =>
       budgetAlloue: budget,
       budgetDemande: demande,
       tauxConsommation: taux,
+      scoreBreakdown,
     };
 
     // ── Sauvegarde en base ──
     const analyse = new AIDecision({
+      directionId: direction._id,
       directionCode: direction.code,
+      directionNom: direction.nom,
       decision: recommandation,
       statut: 'termine',
       raison: justification,
@@ -328,6 +485,7 @@ router.post('/analyze/:directionId', verifyToken, adminOrDG, async (req, res) =>
       suggestions: suggestions,
       budgetAlloue: budget,
       budgetDemande: demande,
+      tauxConsommation: taux,
       createdBy: req.user?.id || 'system',
     });
     

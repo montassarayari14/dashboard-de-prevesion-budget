@@ -4,9 +4,9 @@ import { useTheme } from "../../hooks/useTheme"
 import API from "../../api/axios"
 
 const tabs = [
-  { id: "profil",    label: "Profil",    icon: "👤" },
-  { id: "securite",  label: "Sécurité",  icon: "🔒" },
-  { id: "apparence", label: "Apparence", icon: "🎨" },
+  { id: "profil",    label: "Profil",    icon: "" },
+  { id: "securite",  label: "Sécurité",  icon: "" },
+  { id: "apparence", label: "Apparence", icon: "" },
 ]
 
 

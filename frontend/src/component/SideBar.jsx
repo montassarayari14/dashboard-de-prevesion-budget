@@ -2,10 +2,10 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 
 const navLinks = [
-  { path: "/dashboard",        label: "Tableau de bord", icon: "▦" },
-  { path: "/admin/comptes",    label: "Comptes",          icon: "◎" },
-  { path: "/admin/logs",       label: "Journaux d'audit", icon: "≡" },
-  { path: "/admin/parametres", label: "Paramètres",       icon: "⚙" },
+  { path: "/dashboard",        label: "Tableau de bord", icon: "" },
+  { path: "/admin/comptes",    label: "Comptes",          icon: "" },
+  { path: "/admin/logs",       label: "Journaux d'audit", icon: "" },
+  { path: "/admin/parametres", label: "Paramètres",       icon: "" },
 ]
 const CURRENT_YEAR = new Date().getFullYear()
 
